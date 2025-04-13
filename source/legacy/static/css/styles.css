@@ -1,0 +1,360 @@
+/* h3 {
+  display: block;
+  font-size: 1.5em;
+  margin-block-start: 0.83em;
+  margin-block-end: 0.83em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+  font-weight: bold;
+} */
+
+/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+h3 {
+  font-size: 1.5em;
+  margin-block-start: 0.83em;
+  margin-block-end: 0.83em;
+  font-weight: bold;
+}
+
+#left-panel {
+  border-right: 1px solid #ccc;
+  height: 98vh;  /* This takes the full height of the viewport */
+  overflow: hidden;  /* Ensure no scrolling for the left-panel */
+  display: flex;
+  flex-direction: column;
+}
+
+#left-panel > p {
+  flex-shrink: 0;  /* Prevents the paragraphs from shrinking */
+}
+
+.full-page{
+  margin: 10px;
+}
+
+.active {
+background-color: #f0f0f0;
+font-weight: bold;
+}
+
+.section {
+  border: 1px solid #000;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.spinner {
+  display: none;
+}
+
+
+/* #chat-box {
+    height: calc(100vh - 210px);
+    overflow-y: scroll;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 10px;
+}
+
+#chat-popup {
+  position: fixed;
+  bottom: 150px;
+  right: 10px;
+  width: 300px;
+  height: calc(100vh - 210px);
+  border: 1px solid #ddd;
+  background-color: white;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: block;
+} */
+
+/* Chat Box Styles */
+#chat-box {
+  height: calc(100vh - 250px);
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 15px;
+  background-color: #f9f9f9;
+}
+
+#chat-popup {
+  position: fixed;
+  bottom: 0;
+  right: 10px;
+  width: 350px;
+  border: 1px solid #ccc;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  z-index: 1000;
+  border-radius: 10px;
+}
+
+.message {
+  margin-bottom: 20px;
+}
+
+.bot-message {
+  text-align: left;
+  .card{
+    background-color: rgb(34, 34, 34);
+    color: rgb(238, 238, 238);
+    border-radius: 15px;
+  }
+}
+
+
+.user-message {
+    text-align: right;
+    .card{
+      background-color: rgb(204, 85, 0);
+      color: rgb(238, 238, 238);
+      border-radius: 15px;
+    }
+}
+
+.leading-qn {
+  text-align: center;
+  cursor: pointer;
+  .card{
+    background-color: rgb(0, 180, 204);
+    color: rgb(238, 238, 238);
+    border-radius: 15px;
+  }
+  .card-body{
+    padding: 0px;
+  }
+}
+
+/* Message Styles - given by ai - retained for now
+.message {
+  margin-bottom: 10px;
+  padding: 8px;
+  border-radius: 10px;
+  color: white;
+}
+
+.bot-message {
+  background-color: #007bff;
+  text-align: left;
+}
+
+.user-message {
+  background-color: #28a745;
+  text-align: right;
+}
+
+.leading-qn {
+  background-color: #ffc107;
+  text-align: center;
+} */
+
+/* Form and Input Styles */
+/* #chat-form {
+  display: flex;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-top: 1px solid #ddd;
+  border-radius: 0 0 10px 10px;
+}
+
+.input-button-container {
+  display: flex;
+  width: 100%;
+}
+
+.form-group {
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+.form-control {
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+  padding: 8px 12px;
+  border-radius: 5px;
+  color: white;
+} */
+
+#chat-form2 {
+  flex-shrink: 0;  /* Prevents the form from shrinking */
+}
+#chat-form {
+  margin-top: auto;
+}
+
+.input-button-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.form-group {
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+
+/* .search-type-options {
+  display: flex;
+  justify-content: space-around;
+} */
+.search-type-options {
+  flex-shrink: 0; /* Prevents the button from shrinking */
+}
+
+.radio-option {
+  display: inline-block; /* This ensures each radio button and its label are inline */
+}
+
+#filelist {
+  max-width: 510px;
+}
+.list-group{
+  font-size: small;
+  overflow-y: auto;  /* Makes the ul scrollable when content overflows */
+  flex-grow: 1;  /* Allows the ul to take up available space */
+}
+
+
+.select-wrapper {
+  display: flex;
+  align-items: center; /* This vertically centers the label in the middle */
+  flex-direction: column; /* This stacks the label on top of the select */
+}
+
+.sine-wave-loader {
+  width: 200px;  /* Adjust as needed */
+  height: 50px;  /* Adjust as needed */
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    #007BFF 10px,
+    #007BFF 20px
+  );
+  background-size: 28px 50px;
+  animation: pulsate 2s infinite alternate;
+}
+
+@keyframes pulsate {
+  0% { background-size: 28px 50px; }
+  100% { background-size: 28px 60px; }
+}
+
+.cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+
+
+  .card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    padding: 0; /* Remove padding to allow the image to extend to the card edges */
+    text-align: center;
+    cursor: pointer;
+    width: 200px; /* Adjust the width as needed */
+    overflow: hidden; /* This will keep the image within the border radius */
+  }
+
+  .card img {
+      width: 100%; /* Make the image take full width of the card */
+      height: 150px; /* Fixed height for all images */
+      display: block; /* Remove any inline spacing */
+      object-fit: cover; /* This will cover the area without stretching the image */
+      border-top-left-radius: 8px; /* Match the card's border radius */
+      border-top-right-radius: 8px;
+  }
+
+  .card-content {
+      padding: 10px; /* Add padding to the content part of the card */
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+  .card-description {
+    font-size: 14px;
+  }
+
+}
+
+.custom-card {
+  border: 2px solid #dee2e6; /* Slightly thicker border */
+  background-color: #f8f9fa; /* Light color background */
+  margin-bottom: 15px; /* Gap between cards */
+}
+
+
+
+
+/* #canvas-container {
+  width: 100%;
+  height: 800px;
+  overflow: auto;
+}
+canvas {
+  border: 1px solid black;
+  direction: ltr;
+}
+
+.pagination {
+  margin-top: 20px;
+  text-align: center;
+}
+.pagination button {
+  margin: 0 5px;
+} */
+
+/* Pagination and Canvas Container */
+#overall-content {
+  width: calc(100% - 370px);
+}
+#canvas-container {
+  width: calc(100% - 370px); /* Adjusted width to accommodate chat-popup */
+  height: 90vh; /* Set the height to be the full viewport height */
+  overflow-x:scroll; /* Horizontal scrollbar if content overflows */
+  overflow-y: auto; /* Vertical scrollbar if content overflows */
+  position: fixed; /* Fixed position to stay in place on scrolling */
+  left: 0; /* Align to the left side */
+  top: 80px; /* Align to the top */
+}
+
+.pagination {
+  margin-top: 0px;
+  position: fixed;
+  right: 370px;
+  top: 40px;
+  text-align: center;
+}
+
+.pagination button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  margin: 0 5px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.pagination button:hover {
+  background-color: #0056b3;
+}

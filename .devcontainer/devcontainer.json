@@ -1,0 +1,27 @@
+// For format details, see https://aka.ms/devcontainer.json.
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2-linux",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "forwardPorts": [
+    5000
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker"
+      ]
+    },
+    "codespaces": {
+      "repositories": {
+        "processwiz/pw-vectoriser": {
+          "permissions": {
+            "contents": "read"
+          }
+        }
+      },
+      "openFiles": [
+        "README.md"
+      ]
+    }
+  }
+}

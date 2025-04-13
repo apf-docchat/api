@@ -1,0 +1,71 @@
+[app]
+user_agent = "DocChat/1.0"
+
+[appdata.driver]
+type = 'local'
+options = { "path" = "./data/app" }
+
+[orgstorage]
+org_dir_field = "name"
+
+[orgstorage.driver]
+type = "local"
+options = { "path" = "./data/orgs" }
+
+[orgs]
+id_field = "organization_id"
+
+[modules]
+enabled = ['docchat', 'dataanalysis', 'esgreporting', 'procurement', 'filewizard', 'docguide', 'newsscraping', 'askdoc', 'docanalysis', 'chat']
+
+[modules.allowed_mimetypes]
+docchat = [
+    "application/pdf",
+    "text/plain",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/msword",
+    "application/vnd.ms-excel",
+    "application/vnd.ms-powerpoint",
+    "text/csv"
+]
+dataanalysis = [
+    "text/csv",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+]
+esgreporting = ["application/pdf"]
+procurement = ["application/pdf"]
+filewizard = [
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv"
+]
+docguide = [
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/pdf",
+    "text/plain",
+    "application/msword",
+    "application/vnd.ms-powerpoint",
+    "text/csv"
+]
+newsscraping = ["application/pdf"]
+askdoc = [
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/pdf",
+    "text/plain",
+    "application/msword",
+    "application/vnd.ms-powerpoint",
+    "text/csv"
+]
+docanalysis = [
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv"
+]
+chat = [
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv"
+]

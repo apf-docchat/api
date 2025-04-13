@@ -1,0 +1,602 @@
+{% extends "base.html" %}
+
+{% block content %}
+      <!-- <div class="row"> -->
+        <!-- <div class="col-md-8 offset-md-2"> -->
+          {% if not collection %}
+            <!-- Display dropdown if dataanalysis_filename is not set -->
+            <!-- <div id="dc-collection-choice">
+              <label for="collectionDropdown" class="font-weight-bold">Please select Files for DocChat:</label>            
+              <select id="collectionDropdown">
+              </select>
+              <button onclick="loadcollection()"  class="btn btn-primary">Select Collection</button>
+            </div> -->
+            <div id="dc-collection-choice">
+              <label for="collectionDropdown" class="font-weight-bold">Please select Document Collection for DocChat:</label>
+              <div id="cardsContainer" class="cards-container"></div>
+          </div>
+          
+          {% endif %}                    
+            <div id="selected-collection"><label for="collection">Collection chosen for DocChat: </label><b><div id="collection" style="display:inline;">{{collection}}</div></b></div>
+            <div id="chat-box">
+              {% for chatlog in old_chat_logs %}
+                  <!-- <div class="message user-message">
+                    <div class="card">
+                        <div class="card-body">
+                          {{chatlog[1] | safe}}
+                        </div>
+                      </div>
+                  </div> -->                        
+                
+                  {% if chatlog['role'] == 'assistant' %}  
+                    <div class="message bot-message">
+                  {% else %}
+                    <div class="message user-message">
+                  {% endif %}                  
+                    <div class="card">
+                        <div class="card-body">
+                          {{chatlog['content'] | safe}}
+                          {% if old_chat_ids[loop.index0] != '' and chatlog['role'] == 'assistant' and metatadata_present[loop.index0] == 1%}
+                            <br/>
+                              <!-- Div with href link to open the popup -->
+                              <div>
+                                  <a href='#' id="seeReferences-{{old_chat_ids[loop.index0]}}" data-id="popup-{{old_chat_ids[loop.index0]}}">See References</a>                               
+                              </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                  </div>
+              {% endfor %}
+
+                <!-- <div class="message bot-message">
+                    <div class="card">
+                        <div class="card-body">
+                            Hello! How can I assist you today?
+                        </div>
+                    </div>
+                </div> -->
+            </div>
+            <form id="chat-form" method="post">
+                <div class="row justify-content-center" id="leading-qn-box" style="display:none;">
+                <div class="col-md-6">
+                <div class="message leading-qn">
+                  <div class="card">
+                    <div class="card-body" id="leading-qn1" style="cursor:pointer;">
+                      ...
+                    </div>
+                  </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="message leading-qn">
+                    <div class="card">
+                      <div class="card-body" id="leading-qn2" style="cursor:pointer;">
+                        ...
+                      </div>
+                    </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control" id="user-input" placeholder="Type your DocChat question...">
+                </div>
+                <!-- Radio Buttons for Search Type -->
+                <div class="search-type-options">
+                  <div class="radio-option">
+                    <input type="radio" id="default-search" name="search-type" value="default" {% if request.args.get('search_type') != 'metadata' %}checked{% endif %}>
+                    <label for="default-search">Default Search</label><br>
+                  </div>
+                  <div>
+                    <input type="radio" id="metadata-search" name="search-type" value="metadata" {% if request.args.get('search_type') == 'metadata' %}checked{% endif %}>
+                    <label for="metadata-search">Metadata Search</label>
+                  </div>
+                  <div class="spinner" id="chat-spinner">Loading...</div>                
+                  <!-- <div class="progress-bar" id="chat-progress" style="visibility: hidden;">
+                    <progress id="progress" value="0" max="60"></progress>
+                  </div> -->
+                  <button type="submit" class="btn btn-primary">Send</button>
+                  <button type="button" id="cancel-button" style="visibility: hidden;">Cancel</button>
+                </div>                
+                
+            </form>
+        <!-- </div> -->
+      <!-- </div> -->
+  <!-- </div> -->
+  {% endblock %}
+
+  {% block scripts %}
+
+    {% if not collection %}
+    <script>
+      function loadcollection(collectionName) {
+          //const dropdown = document.getElementById('collectionDropdown');
+          //collection = dropdown.value;
+          //alert('Loaded file: ' + dataanalysis_filename);
+          $("#chat-box").show();
+          $("#chat-form").show();  
+          $("#dc-collection-choice").hide();
+          $("#selected-collection").show();                  
+          //$("#collection").html(collection);
+          // Update the collection name in your HTML
+          $("#collection").html(collectionName);
+          // You can further use the dataanalysis_filename in your script as needed
+      }      
+
+
+      $(document).ready(function(){        
+        $("#chat-box").hide();
+        $("#chat-form").hide();
+        $("#selected-collection").hide();        
+        $.ajax({
+          url: "/folderlist2",
+          type: "POST",
+          processData: false,
+          contentType: "application/json",
+          data: JSON.stringify({type: "docchat"}),
+          success: function(data) {
+            //Add options to select list for each item on data.result
+            /* var select = $("#collectionDropdown");
+            select.empty(); // empty the select 
+
+            // List each file one by one
+            data.result.forEach(function(item){
+            option = $("<option></option>")
+                .attr("value", item.collection)
+                .text(item.collection);
+            select.append(option);
+            }); */
+            var container = $("#cardsContainer");
+            container.empty(); // Clear previous content
+
+            // List each file one by one
+            i=0;
+            data.result.forEach(function(item){
+              // Create card for each item
+              var card = $('<div class="card"></div>')
+                  .click(function() { 
+                    loadcollection(item.collection); // Pass the collection name to the loadcollection function
+                  });
+
+              var img = $('<img src="{{imgpathprefix}}'+ ((i % 7)+1) + '.jpg">'); // Path to the icon/image
+              card.append(img);
+
+              // Create a container for the text content
+              var cardContent = $('<div class="card-content"></div>');
+
+              var title = $('<div class="card-title"></div>')
+                  .text(item.collection);
+              cardContent.append(title);
+
+              var description = $('<div class="card-description"></div>')
+                  .text(item.description); // Add your description
+              cardContent.append(description);
+
+              card.append(cardContent);
+
+              container.append(card);
+              i++;
+            });
+          }
+        });
+      });
+    </script>
+    {% endif %}    
+
+  <script>
+      function loadSeeReferencePopup(jsonString, id) {
+        // Assuming response.metadata contains the JSON list string
+        //var jsonString = data.metadata;
+        //alert(jsonString);
+        try {
+          // Parse the JSON string to get the list of items
+          var itemList = jsonString //JSON.parse(jsonString);
+
+          // Generate unique ids for the new div elements
+          //var uniquePopupId = 'popup-' + new Date().getTime();
+          uniquePopupId = 'popup-' + id;
+          var uniqueTabId = 'tabs-' + new Date().getTime();
+
+          // Create the outer div with the unique id, title attribute, and style to hide it initially
+          var newPopupDiv = $('<div id="' + uniquePopupId + '" title="References" style="display:none;"></div>');
+
+          // Create the inner tabs div with the unique id and an empty ul element inside it
+          var newTabsDiv = $('<div id="' + uniqueTabId + '"><ul></ul></div>');
+
+          // Append the tabs div to the popup div
+          newPopupDiv.append(newTabsDiv);
+
+          // Append the newly created popup div to a container in the DOM, e.g., the body element
+          $('body').append(newPopupDiv);
+
+
+          // Initialize tabs
+          var tabsDiv = $('#'+uniqueTabId);
+
+          // Determine the number of tabs to be created (maximum 5)
+          var numberOfTabs = Math.min(itemList.length, 10);
+
+          // Initialize tabs
+          for (var index = 0; index < numberOfTabs; index++) {
+              var item = itemList[index];
+
+              // Add tab title
+              tabsDiv.children('ul').append('<li><a href="#'+uniqueTabId+'-' + index + '">' + (index + 1) + '</a></li>');
+
+              // Create content for each tab
+              var tabContent = '<div id="'+uniqueTabId+'-' + index + '">';
+              $.each(item, function(key, value) {
+                  tabContent += '<p><strong>' + key + ':</strong> ' + (value ? value : 'NA') + '</p>';
+              });
+              tabContent += '</div>';
+              tabsDiv.append(tabContent);                        
+              /* // Extract the fields from the item
+              var masterfilename = item.masterfilename ? item.masterfilename : "NA";
+              var sectionname = item.sectionname ? item.sectionname : "NA";
+              var startingpagenum = item.startingpagenum ? item.startingpagenum : "NA";
+              var text = item.text ? item.text : "NA";
+              
+              // Do something with the extracted fields, e.g., log them to the console
+              console.log("masterfilename:", masterfilename, "sectionname:", sectionname, "startingpagenum:", startingpagenum, "text:", text); */
+          };
+          // Create tabs
+          tabsDiv.tabs();
+
+          /* // Dynamically create the "See References" link using editor.dom.create
+          var seeReferencesLink = editor.dom.create('a', { href: '#', id: 'seeReferences-'+uniquePopupId, 'data-id': uniquePopupId}, 'See References');
+          // Insert the "See References" link after the referenceNode using editor.dom.insertAfter
+          editor.dom.insertAfter(seeReferencesLink, newNode); */
+
+        } catch (e) {
+            // Handle the error, e.g., log it to the console
+            console.error("Error getting reference data from the source documents:", e);
+        }                    
+
+        let seeRefLink = ''
+        //alert(jsonString.length);
+        if (jsonString && jsonString != [] && id !== '') {
+          seeRefLink = `<br>
+                      <a href='#' id='seeReferences-${uniquePopupId}' data-id=${uniquePopupId}>See References</a>`
+        }
+        //alert(seeRefLink);
+        return seeRefLink
+      }
+
+      function getQueryStringValue(key) {
+        var queryString = window.location.search.substring(1);
+        var queryParams = queryString.split('&');
+
+        for (var i = 0; i < queryParams.length; i++) {
+            var pair = queryParams[i].split('=');
+            if (pair[0] == key) {
+                return pair[1];
+            }
+        }
+
+        return null;
+      }
+
+      function defaultSearchSend(userInput, collection, searchType, isNewChat) {
+        // Get or create the div for displaying the stream
+        const container = document.getElementById('chat-box'); // Parent element
+        let streamDiv, innerStreamDiv;
+        uniqueId = Math.random() * 1000000
+
+        if (!document.getElementById('streamDiv-'+uniqueId)) {
+            streamDiv = document.createElement('div');
+            streamDiv.id = 'streamDiv-'+uniqueId;
+            let botResponse = `
+              <div class="message bot-message">
+                  <div class="card">
+                      <div class="card-body" id="innerStreamDiv-${uniqueId}">
+                      </div>
+                  </div>
+              </div>`;
+            streamDiv.innerHTML += botResponse;                
+            container.appendChild(streamDiv);
+            $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);                        
+            innerStreamDiv =  document.getElementById('innerStreamDiv-' + uniqueId);
+            innerStreamDiv.innerHTML = 'Loading...';
+        } else {
+            innerStreamDiv =  document.getElementById('innerStreamDiv-' + uniqueId);
+        }
+      
+        markdownFullText = '';
+        const evtSource = new EventSource('/docchat?' + 'user_text=' + userInput + '&type=docchat&collection='+collection+'&search_type='+searchType+'&new_chat='+isNewChat);
+
+        evtSource.onmessage = function(event) {
+          if (event.data) {
+            // Append the new message to the streamDiv
+            if (innerStreamDiv.innerHTML.trim() == 'Loading...') {
+                innerStreamDiv.innerHTML = '';
+              }
+            markdownFullText += event.data;
+            innerStreamDiv.innerHTML = markdownFullText;
+            $('#chat-box').append(streamDiv);
+            $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+          }
+        };
+
+        evtSource.addEventListener('finalOutput', function(event) {
+          $("#chat-spinner").hide();
+          //$("#chat-progress").hide();
+          data = JSON.parse(event.data);
+          var latestChatThreadId = data.f;
+          if (data.new_chat === '1') {
+            var currentBaseURL = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+            var newURL = currentBaseURL + "?f=" + encodeURIComponent(latestChatThreadId)+ "&type=docchat";
+            window.location.href = newURL;
+          }
+
+          let seeRefLink = (data && data.metadata !== undefined && data.id !== undefined && data.metadata !== '[]' && data.metadata !== '')?loadSeeReferencePopup(JSON.parse(data.metadata), data.id) : '';
+              
+          innerStreamDiv.innerHTML = data.response+seeRefLink;
+          $('#chat-box').append(streamDiv);
+          $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+
+          evtSource.close();
+      
+          collection = $("#collection").html();
+          //After the full response from the bot has come, populate the leading question buttons
+          $.ajax({
+            url: "/getleadingquestions",
+            type: "POST",
+            processData: false,
+            contentType: "application/json",
+            data: JSON.stringify({latestchatthreadid: latestChatThreadId, collection: collection}),
+            success: function(data) {
+              console.log(data.response);
+              responseJson = JSON.parse(data.response);
+
+              $('#leading-qn-box').show();
+              $('#leading-qn1').html(responseJson.leadingquestion1);
+              $('#leading-qn2').html(responseJson.leadingquestion2);
+            }
+          });
+        });
+
+        evtSource.onerror = function(event) {
+            console.error('EventSource failed:', event);
+            evtSource.close();
+        };        
+      }
+
+      function metadataSearchSend(userInput, collection, searchType, isNewChat) {
+        currentRequest = $.ajax({
+                  url: "/docchat?user_text="+userInput+"&file_selected=['all']&type=docchat&collection="+collection+"&search_type="+searchType+"&new_chat="+isNewChat,
+                  type: "GET",
+                  //contentType: "application/json",
+                  //data: JSON.stringify({user_text: userInput, file_selected: ["all"], type: "docchat", collection: collection, search_type: searchType, new_chat: isNewChat}),
+                  success: function(data) {
+                    console.log(data);
+                    data = JSON.parse(data);
+                    if (data.new_chat === '1') {
+                      var f = data.f;  // Replace with your actual value or logic
+                      var currentBaseURL = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+                      var newURL = currentBaseURL + "?f=" + encodeURIComponent(f)+ "&type=docchat&search_type="+searchType;
+                      window.location.href = newURL;
+                    }
+
+                    // convert markdown to HTML using marked
+                    let convertedData = window.marked(data.response);
+                    //alert(convertedData);
+                    
+                    //seeRefLink = loadSeeReferencePopup(data.metadata, data.id);
+                    //alert(data.metadata);
+                    let seeRefLink = (data && data.metadata !== undefined && data.id !== undefined && data.metadata !== '[]' && data.metadata !== '')?loadSeeReferencePopup(JSON.parse(data.metadata), data.id) : '';
+                    let botResponse = `
+                      <div class="message bot-message">
+                          <div class="card">
+                              <div class="card-body">
+                                  ${convertedData}${seeRefLink}
+                              </div>
+                          </div>
+                      </div>`;           
+
+                    $("#chat-spinner").hide();
+                    //$("#chat-progress").hide();
+                    $('#chat-box').append(botResponse);
+                    $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);                        
+                  },
+                  complete: function() {
+                      // Clear the current request when it's complete
+                      currentRequest = null;
+                  }
+        });        
+      }
+
+      function chatProgressShow() {
+        let progress = document.getElementById('progress');
+        $("#chat-progress").show();
+        let counter = 0;
+        let interval = setInterval(function() {
+            counter++;
+            progress.value = counter;
+
+            if (counter === 60) {
+                clearInterval(interval);
+            }
+        }, 1000);
+      }
+
+      $(document).ready(function(){
+        //reload page if this is a new chat so that the title comes on left pane
+        var isNewChat = "{% if new_chat is defined and new_chat == 'yes' %}yes{% else %}no{% endif %}";        
+        {% for chatlog in old_chat_logs %}
+          {% if load_popup_script[loop.index0] != 'loadSeeReferencePopup("\"\"");' %}
+              {{load_popup_script[loop.index0]|safe}}
+          {% endif %}
+        {% endfor %}
+
+          $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+          //$('#cancel-button').hide();
+
+          $('#metadata-search').change(function() {
+            console.log('Metadata search radio button clicked');
+            if ($(this).is(':checked')) {
+                // If the radio button is checked, show the cancel button
+                $('#cancel-button').css('visibility', 'visible');
+            } 
+          });
+          $('#default-search').change(function() {
+            console.log('Default search radio button clicked');
+            if ($(this).is(':checked')) {
+                // If the radio button is unchecked, hide the cancel button
+                $('#cancel-button').css('visibility', 'hidden');
+            }
+          });
+
+          /* //After old chat logs are loaded, populate the leading question buttons
+          var latestChatThreadId = getQueryStringValue('f');
+          collection = $("#collection").html();
+          //alert(latestChatThreadId);
+          if (latestChatThreadId != null) {
+            $.ajax({
+              url: "/getleadingquestions",
+              type: "POST",
+              processData: false,
+              contentType: "application/json",
+              data: JSON.stringify({latestchatthreadid: latestChatThreadId, collection: collection}),
+              success: function(data) {
+                console.log(data.response);
+                responseJson = JSON.parse(data.response);
+
+                $('#leading-qn-box').show();
+                $('#leading-qn1').html(responseJson.leadingquestion1);
+                $('#leading-qn2').html(responseJson.leadingquestion2);
+              }
+            });
+          } */
+
+
+          // Add an event listener for the 'click' event on links with ID starting with 'seeReferences'
+          $(document).on('click', 'a[id^="seeReferences"]', function(e) {
+              e.preventDefault();
+
+              // Execute your custom code for the "See References" link
+              console.log('See References link clicked');
+
+              // Access the data attribute value of the #seeReferences element
+              var dataValue = $(this).data('id');  // Using jQuery's data() method
+              console.log(dataValue);
+
+              // Check if dataValue is defined
+              if (typeof dataValue !== 'undefined') {
+                  // Append the dataValue to the id of the #popup to get the full unique id
+                  var fullUniqueId = dataValue;
+
+                  // Open the popup with the full unique id as a non-modal dialog
+                  $('#' + fullUniqueId).dialog({
+                      modal: false,
+                      width: 700,
+                      height: 500,
+                      closeText: "Close"
+                  });
+              } else {
+                  console.error('Data attribute "field" is not defined on the #seeReferences element.');
+              }
+          });
+
+
+
+          //Send Question to LLM
+          //$("#send-button").click(function(){
+          $('#chat-form').on('submit', function(e) {            
+            e.preventDefault();
+            $("#chat-spinner").show();
+            //chatProgressShow();
+
+            var fileSelected = $("#filelist").val();
+            // Check if no options are selected or the array is empty
+            if(!fileSelected || fileSelected.length === 0) {
+                fileSelected = [];
+            }
+            let userInput = $('#user-input').val();
+            collection = $("#collection").html();
+            var searchType = document.querySelector('input[name="search-type"]:checked').value;
+
+            if (userInput.trim() !== '') {
+              let timestamp = new Date().getTime();
+              let userMessage = `
+                  <div class="message user-message" id="user-message-${timestamp}">
+                      <div class="card">
+                          <div class="card-body">
+                              ${userInput}
+                          </div>
+                      </div>
+                      <img id="repeat-icon-${timestamp}" src="{{ url_for('static', filename='images/repeat-icon.png') }}" style="width: 20px;"/>
+                  </div>
+              `;
+
+              $('#chat-box').append(userMessage);
+              $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+              $('#user-input').val('');
+              if (searchType === 'metadata') {
+                metadataSearchSend(userInput, collection, searchType, isNewChat);
+              } else {
+                defaultSearchSend(userInput, collection, searchType, isNewChat);
+              }
+
+            }
+          });
+
+          $(document).on('click', '[id^="repeat-icon-"]', function() {
+            $("#chat-spinner").show();
+            //chatProgressShow();
+
+            let timestamp_portion = this.id.split('-')[2];
+            let userInput = $(`#user-message-${timestamp_portion} .card-body`).html();
+            collection = $("#collection").html();
+            let searchType = $('input[name="search-type"]:checked').val();
+            
+            let timestamp = new Date().getTime();
+            let userMessage = `
+                <div class="message user-message" id="user-message-${timestamp}">
+                    <div class="card">
+                        <div class="card-body">
+                            ${userInput}
+                        </div>
+                    </div>
+                    <img id="repeat-icon-${timestamp}" src="{{ url_for('static', filename='images/repeat-icon.png') }}"  style="width: 20px;"/>
+                </div>
+            `;
+
+            $('#chat-box').append(userMessage);
+            $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+
+            //metadataSearchSend(userInput, collection, searchType, isNewChat);
+            if (searchType === 'metadata') {
+              metadataSearchSend(userInput, collection, searchType, isNewChat);
+            } else {
+              defaultSearchSend(userInput, collection, searchType, isNewChat);
+            }
+          });          
+
+          $("#cancel-button").on('click', function() {
+            // Abort the request when the Cancel button is clicked
+            if (currentRequest) {
+                currentRequest.abort();
+                $("#chat-spinner").hide();
+                //$("#chat-progress").hide();
+            }
+          });
+
+          //When user pressed leding question button, send the question to llm by trigerring submit chat form 
+          $('#leading-qn1').click(function() {
+            // Move the innerHTML of the div to the input field
+            var text = $(this).html();
+            $('#user-input').val(text);
+
+            // Trigger the form submission
+            $('#chat-form').submit();
+          });
+          $('#leading-qn2').click(function() {
+            // Move the innerHTML of the div to the input field
+            var text = $(this).html();
+            $('#user-input').val(text);
+
+            // Trigger the form submission
+            $('#chat-form').submit();
+          });
+      });
+  </script>
+  {% endblock %}

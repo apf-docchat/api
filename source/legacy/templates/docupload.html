@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <div class="col-md-12">
+            <h2 class="mb-4 text-center">
+                {% if type == 'docchat' %}Manage Source Files
+                {% elif type == 'dataanalysis' %}Manage Source Files
+                {% endif %}
+            </h2>          
+            <div class="card custom-card">
+            <div class="card-body">              
+                <h3>Collections and Files</h3>          
+                <div class="mb-3">
+                    <div class="sine-wave-loader spinner" id="filelist-spinner-{{type}}"></div>
+                    <div class="select-wrapper mt-3">
+                        <select id="filelist-{{type}}" class="form-control" size="15" multiple></select>
+                    </div>
+                    <div id="no-files-message-{{type}}" class="alert alert-warning mt-3" style="display: none;">No files uploaded yet</div>
+                </div>
+                <div class="d-inline-flex justify-content-center">
+                    <a  class="btn btn-primary" href="doccollectionchange">Change File Collection</a>
+                </div>
+                <div class="d-inline-flex justify-content-center">
+                    <a  class="btn btn-primary" href="docdelete?type={{type}}">Delete Files</a>
+                </div>
+            </div> <!-- Card body -->
+            </div> <!-- Card -->
+    
+            <div class="card custom-card">
+            <div class="card-body">            
+                <h3>Upload Files</h3>
+                <div class="mb-3">
+                    <input type="file" class="form-control" id="file-upload-{{type}}">
+                </div>
+                <div class="mb-3">
+                    <label for="url-input-{{type}}">Or Enter Pdf URL:</label>
+                    <input type="text" class="form-control" id="url-input-{{type}}" placeholder="Enter PDF URL">
+                </div>            
+                <div class="mb-3">
+                    <button class="btn btn-primary" id="upload-button-{{type}}">Upload</button><br>
+                    <label style="font-size:x-small;">(Uploaded files go to NotInAnyCollection by default)</label>
+                </div>                
+            </div>
+            </div> <!-- End of Card -->
+
+            <div class="card custom-card" id="uploadMessageCard">
+            <div class="card-body">                
+                <div class="sine-wave-loader spinner" id="upload-spinner-{{type}}"></div>
+                <div id="output-upload-{{type}}" class="mt-3"></div>            
+            </div> <!-- Card body -->
+            </div> <!-- Card -->
+
+
+            <div class="card custom-card">
+            <div class="card-body">   
+                <h3>Collections</h3>                                         
+                <div class="mb-3">
+                    <select class="form-select" id="collectionDropdown" multiple>
+                        <!-- Options will be populated here -->
+                    </select>
+                </div>
+                <div class="d-inline-flex justify-content-center">
+                    <a class="btn btn-primary" href="#" id="addcollectionLink">Add New Collection</a>
+                </div>
+                <div class="modal fade" id="addcollectionModal" tabindex="-1" role="dialog" aria-labelledby="addcollectionModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                        <h5 class="modal-title" id="addcollectionModalLabel">Add Collection</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        </div>
+                        <div class="modal-body">
+                        <form id="addcollectionForm">
+                            <div class="form-group">
+                            <label for="collectionName">Collection Name:</label>
+                            <input type="text" class="form-control" id="collectionName" name="name" required>
+                            </div>
+                            <div class="form-group">
+                            <label for="collectionDescription">Description:</label>
+                            <textarea class="form-control" id="collectionDescription" name="description" required></textarea>
+                            <small class="form-text text-muted">This field is to tell the AI system what the files in this collection will be about. Describe in detail and accurately so that the AI system's understanding and response will be better.</small>
+                            </div>
+                        </form>
+                        </div>
+                        <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="addcollection()">Add Collection</button>
+                        </div>
+                    </div>
+                    </div>
+                </div>           
+            </div>
+            </div> <!-- Card -->            
+
+        </div>
+    </div>
+    
+    <!-- </div> -->
+  {% endblock %}
+
+  {% block scripts %}
+  <script>
+    // Function to toggle visibility based on data.result
+    function showZeroFileMsg(show) {
+        if (show) {
+            $("#filelist-{{type}}").hide();
+            $("#no-files-message-{{type}}").show();
+        } else {
+            $("#filelist-{{type}}").show();
+            $("#no-files-message-{{type}}").hide();
+        }
+    }
+      
+    function addcollection() {
+            const collectionData = {
+                name: $('#collectionName').val(),
+                description: $('#collectionDescription').val()
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: "{% if type == 'dataanalysis' %} /addfolder {% else %} /addfolder2 {% endif %}",
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify(collectionData),
+                success: function(data) {
+                    var dropdown = $("#collectionDropdown");
+                    dropdown.empty();
+                    $.each(data, function(index, item) {
+                        dropdown.append(new Option(item, item));
+                    });
+                    
+                    // Set the newly added collection as the selected option
+                    $('#collectionDropdown').val(collectionData.name);
+                    
+                    $('#addcollectionModal').modal('hide');
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+    }    
+
+      $(document).ready(function(){
+        $("#uploadMessageCard").hide();
+        $.ajax({
+        url:  "{% if type == 'dataanalysis' %} /folderlist {% else %} /folderlist2 {% endif %}",
+        type: "POST",
+        processData: false,
+        contentType: "application/json",
+        data: JSON.stringify({type: "{{ type}}" }),        
+        success: function(data) {
+            console.log(data)
+            var dropdown = $("#collectionDropdown");
+            dropdown.empty();
+            $.each(data.result, function(index, item) {
+                dropdown.append(new Option(item.collection, item.collection));
+            });
+        },
+        error: function(error) {
+            console.log(error);
+        }
+        });        
+        
+        $('#addcollectionLink').click(function() {
+            $('#addcollectionModal').modal('show');
+        });
+
+        //Load list of files uploaded to filter the response
+        $("#filelist-spinner-{{type}}").show();
+        $.ajax({
+            url: "{% if type == 'dataanalysis' %} /filelist {% else %} /filelist2 {% endif %}",
+            type: "POST",
+            processData: false,
+            contentType: "application/json",
+            data: JSON.stringify({type: "{{ type }}"}),
+            success: function(data) {
+                //Add options to select list for each item on data.result
+                var select = $("#filelist-{{type}}");
+
+                // Check if the list of files in data.result array is empty
+                if (data.result.length === 0) {
+                    showZeroFileMsg(true);
+                } else {
+                    showZeroFileMsg(false);
+                }
+/*                 //If list of files is not empty list them one by one
+                data.result.forEach(function(item){
+                  option = $("<option></option>")
+                      .attr("value", item)
+                      .text(item);
+                  select.append(option);
+                }); */
+                // Create a dictionary to group filenames by collection
+                let filesBycollection = {};
+                console.log(data.result);
+                // Group each file by its collection
+                data.result.forEach(function(item) {
+                    if (!filesBycollection[item.collection]) {
+                        filesBycollection[item.collection] = [];
+                    }
+                    filesBycollection[item.collection].push(item.filename);
+                });
+
+                // Create option groups for each collection and add file options under them
+                for (const [collection, filenames] of Object.entries(filesBycollection)) {
+                    let optgroup = $('<optgroup></optgroup>').attr('label', collection);
+                    
+                    filenames.forEach(function(filename) {
+                        let option = $('<option></option>').attr('value', filename).text(filename);
+                        optgroup.append(option);
+                    });
+                    
+                    select.append(optgroup);
+                }
+
+
+                $("#filelist-spinner-{{type}}").hide();
+            }
+        });
+
+
+        function isValidPdfUrl(pdfUrl) {
+            // Extract the pathname from the URL
+            var url = new URL(pdfUrl);
+            var pathname = url.pathname.toLowerCase();
+
+            // Check if the pathname ends with '.pdf'
+            return pathname.endsWith('.pdf');
+        }
+
+
+        //Upload file
+        $("#upload-button-{{type}}").click(function(){
+            var file_data = $('#file-upload-{{type}}').prop('files')[0];
+            var pdfUrl = $('#url-input-{{type}}').val();
+
+            // Check if no file has been selected
+            if (!file_data && !pdfUrl) {
+                alert("Please select a file or enter URL before uploading.");
+                return;
+            }
+
+            if (pdfUrl && !isValidPdfUrl(pdfUrl)) {
+                alert('Please enter a valid PDF URL');
+                return;
+            }
+
+            var form_data = new FormData();
+            if (file_data) {
+                // Check the file type based on the type value
+                var fileType = file_data.name.split('.').pop().toLowerCase();
+                if ('{{type}}' === 'dataanalysis' && fileType !== 'csv') {
+                    alert("Please upload a CSV file for data analysis.");
+                    return;
+                } else if ('{{type}}' === 'docchat' && fileType !== 'pdf' && fileType !== 'docx') {
+                    alert("Please upload a PDF or DOCX file for doc chat.");
+                    return;
+                }
+                form_data.append('file', file_data);
+            } else if(pdfUrl) {
+                form_data.append('url', pdfUrl);
+            }
+
+            form_data.append('type', '{{type}}');
+            // Get the selected collection from the dropdown
+            var selectedcollection = $('#collectionDropdown').val();
+            form_data.append('collection', selectedcollection);
+            $("#upload-spinner-{{type}}").show();
+
+            $.ajax({
+                url: "{% if type == 'dataanalysis' %} /docupload {% else %} /docupload2 {% endif %}",
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: form_data,
+                success: function(data) {
+                    $("#uploadMessageCard").show();
+                    let convertedData = window.marked(data.result);                    
+                    let newElemContent;
+                    if ('{{type}}' === 'dataanalysis') {
+                        newElemContent = "<h3>Doc upload completed</h3>";
+                    } else if ('{{type}}' !== 'dataanalysis') {
+                        newElemContent = "<h3>Note:</h3>"+"<p>" + convertedData + "</p>";
+                    }
+                    let newElem = $("<div>" + newElemContent + "</div>");
+
+                    newElem.css({
+                        "padding" : "20px",
+                        "margin-bottom" : "10px",
+                        "background-color" : "#f1f1f1",
+                        "border" : "1px solid #d9d9d9",
+                        "border-radius" : "4px"
+                    });
+                    newElem.find("h3").css({
+                        "font-size" : "1.2em",
+                        "color" : "#333"
+                    });
+                    newElem.find("p").css({
+                        "margin-top" : "10px",
+                        "line-height" : "1.5",
+                        "color" : "#666"
+                    });                      
+                    $("#output-upload-{{type}}").prepend(newElem);                      
+                    $("#upload-spinner-{{type}}").hide();                      
+                }
+            });
+          }); //upload button click
+
+      }); //document.ready
+  </script>
+  {% endblock %}

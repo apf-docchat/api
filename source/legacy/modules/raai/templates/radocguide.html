@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html>
+<head>  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocChat</title>
+  <!-- CSS -->
+  <!-- CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_raai.css') }}">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha512-q+4liFwdPC/bNdhUpZx6aXDx/h77yEQtn4I1slHydcbZK34nLaR3cAeYSJshoxIOq3mjEf7xJE8YWIUHMn+oCQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+
+<body>
+  <div class="logo">
+    ra.Ai
+  </div>
+  <nav class="top-menu">
+    <ul>
+      <li><a href="raai">Home</a></li>
+      <li><a href="logout">Logout</a></li>
+    </ul>
+  </nav>      
+  <!-- <div id="closeButton" style="position:fixed; top: 10px; right: 10px; cursor : pointer;">
+    <button type="button" class="btn-close" aria-label="Close" style="height: 20px; width: 20px; border: none; background-color: #ffffff; color: black; border-radius: 50%; font-size: 10px; text-align: center; line-height: 20px;">X</button>
+  </div> -->
+  <div class="full-page-raai">
+    <div class="row m-0">
+      <div class="col-md-3" id="left-panel-raai">  
+        <div class="mt-2">
+          <h3 style="color: white;font-family: Verdana, Geneva, Tahoma, sans-serif;font-size: small;text-align: center;">Uploaded Files</h3>
+          <div class="mb-3">
+              <div class="sine-wave-loader spinner" id="filelist-spinner"></div>
+              <input type="hidden" id="filename" value="">
+              <div class="select-wrapper mt-3">
+                  <select id="filelist-raai" class="form-control" size="15"></select>
+              </div>
+              <div id="no-files-message" class="alert alert-warning mt-3" style="display: none;">No files uploaded yet</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-9"style="overflow-x: hidden;" id="right-panel-raai">  
+        <div id="overall-content">          
+          <div id="canvas-container">
+          </div>
+          <div class="pagination" id="pagination">
+            <button id="prevPageBtn" class="btn btn-secondary">Previous</button>
+            <span id="page-numbers" style="color:#ffffff;font-size: 10px"></span>
+            <button id="nextPageBtn" class="btn btn-secondary">Next</button>
+          </div>
+          <div id="chat-popup">  
+            <div id="chat-box">
+            </div>
+            <form id="chat-form" method="post">
+                <div class="row justify-content-center" id="box-leading-qn" style="display:none;">
+                <div class="col-md-6">
+                <div class="message leading-qn">
+                  <div class="card">
+                    <div class="card-body leading-qn" id="leading-qn1" data-label="">
+                      ...
+                    </div>
+                  </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="message leading-qn">
+                    <div class="card">
+                      <div class="card-body leading-qn" id="leading-qn2" data-label="">
+                        ...
+                      </div>
+                    </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="input-button-container">
+                  <div class="form-group">
+                      <input type="text" class="user-query" id="user-input" placeholder="Type your question...">
+                  </div>
+                  <!-- Radio Buttons for Search Type -->
+                  <div class="search-type-options">
+                    <!-- <div class="radio-option">
+                      <input type="radio" id="default-search" name="search-type" value="default" checked>
+                      <label for="default-search">Default Search</label><br>
+                    </div>
+                    <div>
+                      <input type="radio" id="metadata-search" name="search-type" value="metadata">
+                      <label for="metadata-search">Metadata Search</label>
+                    </div> -->
+                    <button type="submit" class="btn-secondary btn-send">Send</button>
+                  </div>              
+                </div>
+            </form>
+          </div> <!-- chat-popup -->
+          </div> <!-- overall-content -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function loadfilename(fileName) {
+          //const dropdown = document.getElementById('filenameDropdown');
+          //filename = dropdown.value;
+          $("#overall-content").show();
+          $("#chat-popup").show();
+          $("#chat-box").show();
+          $("#chat-form").show();  
+          $("#dc-filename-choice").hide();
+          $("#selected-filename").show();                  
+          viewFile();          
+          f=getQueryStringValue('f');
+          getleadingqns(f);
+      }      
+
+      function showZeroFileMsg(show) {
+        if (show) {
+            $("#filelist-raai").hide();
+            $("#no-files-message").show();
+        } else {
+            $("#filelist-raai").show();
+            $("#no-files-message").hide();
+        }
+    }    
+
+    function loadFilelist() {
+      $("#filelist-raai").empty();
+      $.ajax({
+            url: "/filelist2",
+            type: "POST",
+            processData: false,
+            contentType: "application/json",
+            data: JSON.stringify({type: "{{ type }}"}),
+            success: function(data) {
+                //Add options to select list for each item on data.result
+                var select = $("#filelist-raai");
+
+                // Check if the list of files in data.result array is empty
+                if (data.result.length === 0) {
+                    showZeroFileMsg(true);
+                } else {
+                    showZeroFileMsg(false);
+                }
+/*                 //If list of files is not empty list them one by one
+                data.result.forEach(function(item){
+                  option = $("<option></option>")
+                      .attr("value", item)
+                      .text(item);
+                  select.append(option);
+                }); */
+                // Create a dictionary to group filenames by collection
+                let filesBycollection = {};
+                console.log(data.result);
+                // Group each file by its collection
+                data.result.forEach(function(item) {
+                    if (!filesBycollection[item.collection]) {
+                        filesBycollection[item.collection] = [];
+                    }
+                    filesBycollection[item.collection].push(item.filename);
+                });
+
+                // Create option groups for each collection and add file options under them
+                for (const [collection, filenames] of Object.entries(filesBycollection)) {
+                    //let optgroup = $('<optgroup></optgroup>').attr('label', collection);
+                    filenames.forEach(function(filename) {
+                        option = $('<option></option>').attr('value', filename).text(filename);
+                        //optgroup.append(option);
+                        select.append(option);
+                    });
+                    
+                    //select.append(optgroup);
+                }
+
+
+                $("#filelist-spinner").hide();
+            }
+        });      
+      }
+
+
+      $(document).ready(function(){        
+        //loadfilename($("#filename").html()); // Pass the file name to the loadfilename function
+        //Load list of files uploaded to filter the response
+        $("#filelist-spinner").show();
+        loadFilelist();              
+        $(document).on('change', '#filelist-raai', function() {
+          console.log('Option selected:', this.value);
+          $("#filename").val(this.value);
+          viewFile();
+        });        
+      });
+    </script>
+
+  <script>
+
+    function viewFile(event=null, selectedPage = null) {
+      if (event !== null) {
+        event.preventDefault();
+      }
+      var url = '/raaiviewfile?filename='+$("#filename").val(); // URL of the PDF file
+      //Change the calc below in case pagesPerSet is increased from 1
+      if (selectedPage === null || isNaN(selectedPage)) {
+        selectedPage = 1;
+      }
+
+      var pdfjsLib = window['pdfjs-dist/build/pdf'];
+      // Set the workerSrc to load PDF.js Worker from the CDN
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+      var pdfDoc = null,
+          canvasContainer = document.getElementById('canvas-container');
+          //ctx = canvas.getContext('2d');        
+          pageNumsDisplay = document.getElementById('page-numbers'),
+          currentPageSet = selectedPage,
+          pagesPerSet = 1;
+      $("#pagination").show();
+
+      function renderPage(pageNum, pdfDoc) {
+        pageRendering = true;
+        // Using promise to fetch the page
+        pdfDoc.getPage(pageNum).then(function(page) {
+            // Get the container's width
+            var containerWidth = canvasContainer.clientWidth - 20;
+
+            // Get the viewport of the page at scale 1
+            var unscaledViewport = page.getViewport({scale: 1});
+
+            // Calculate the scale required to fit the page within the container
+            var scale = containerWidth / unscaledViewport.width;
+            var viewport = page.getViewport({scale: scale});
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            canvasContainer.appendChild(canvas);
+
+            // Render PDF page into canvas context
+            var renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+            };
+            var renderTask = page.render(renderContext);
+
+            // Wait for rendering to finish
+            renderTask.promise.then(function() {
+                pageRendering = false;
+            });
+        });
+      }    
+
+      function loadPages(direction, pdfDoc) {
+        canvasContainer = document.getElementById('canvas-container');
+        // Clear existing canvases
+        canvasContainer.innerHTML = '';
+
+        // Calculate the page set
+        if (direction === 'next' && currentPageSet * pagesPerSet < pdfDoc.numPages) {
+            currentPageSet++;
+        } else if (direction === 'prev' && currentPageSet > 1) {
+            currentPageSet--;
+        }
+
+        var startPage = (currentPageSet - 1) * pagesPerSet + 1;
+        var endPage = startPage + pagesPerSet - 1;
+        endPage = endPage > pdfDoc.numPages ? pdfDoc.numPages : endPage;
+
+        for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
+            renderPage(pageNum, pdfDoc);
+        }
+
+        // Update the page numbers display
+        //pageNumsDisplay.textContent = `Pages ${startPage} to ${endPage}`;
+        pageNumsDisplay.textContent = `Page: ${startPage} of ${pdfDoc.numPages}`;
+      }
+
+      // Asynchronously downloads PDF
+      pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
+          pdfDoc = pdfDoc_;
+          //renderPage(pageNum);
+          /* for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+              renderPage(pageNum, pdfDoc);
+          } */
+          loadPages('init', pdfDoc);
+          document.getElementById('prevPageBtn').onclick = function() {
+            loadPages('prev', pdfDoc);
+          };
+          document.getElementById('nextPageBtn').onclick = function() {
+            loadPages('next', pdfDoc);
+          };
+      });
+      
+    }
+
+      function loadSeeReferencePopup(jsonString, id) {
+        // Assuming response.metadata contains the JSON list string
+        //var jsonString = data.metadata;
+        //alert(jsonString);
+        try {
+          // Parse the JSON string to get the list of items
+          var itemList = jsonString //JSON.parse(jsonString);
+
+          // Generate unique ids for the new div elements
+          //var uniquePopupId = 'popup-' + new Date().getTime();
+          uniquePopupId = 'popup-' + id;
+          var uniqueTabId = 'tabs-' + new Date().getTime();
+
+          // Create the outer div with the unique id, title attribute, and style to hide it initially
+          var newPopupDiv = $('<div id="' + uniquePopupId + '" title="References" style="display:none;"></div>');
+
+          // Create the inner tabs div with the unique id and an empty ul element inside it
+          var newTabsDiv = $('<div id="' + uniqueTabId + '"><ul></ul></div>');
+
+          // Append the tabs div to the popup div
+          newPopupDiv.append(newTabsDiv);
+
+          // Append the newly created popup div to a container in the DOM, e.g., the body element
+          $('body').append(newPopupDiv);
+
+
+          // Initialize tabs
+          var tabsDiv = $('#'+uniqueTabId);
+
+          // Determine the number of tabs to be created (maximum 5)
+          var numberOfTabs = Math.min(itemList.length, 10);
+
+          // Initialize tabs
+          for (var index = 0; index < numberOfTabs; index++) {
+              var item = itemList[index];
+
+              // Add tab title
+              tabsDiv.children('ul').append('<li><a href="#'+uniqueTabId+'-' + index + '">' + (index + 1) + '</a></li>');
+
+              // Create content for each tab
+              var tabContent = '<div id="'+uniqueTabId+'-' + index + '">';
+              $.each(item, function(key, value) {
+                  tabContent += '<p><strong>' + key + ':</strong> ' + (value ? value : 'NA') + '</p>';
+              });
+              tabContent += '</div>';
+              tabsDiv.append(tabContent);                        
+          };
+          // Create tabs
+          tabsDiv.tabs();
+        } catch (e) {
+            // Handle the error, e.g., log it to the console
+            console.error("Error getting reference data from the source documents:", e);
+        }                    
+
+        let seeRefLink = ''
+        //alert(jsonString.length);
+        if (jsonString && jsonString != [] && id !== '') {
+          seeRefLink = `<br>
+                      <a href='#' id='seeReferences-${uniquePopupId}' data-id=${uniquePopupId}>See References</a>`
+        }
+        //alert(seeRefLink);
+        return seeRefLink
+      }
+
+    function getchatlog() {
+      var messagesList = [];
+
+      // Iterate over each div with class 'card-body'
+      $('.message').each(function() {
+          var innerHTML = $(this).html();
+
+          // Check if the parent's parent div has class 'message bot-message'
+          if ($(this).hasClass('message bot-message')) {
+              messagesList.push({ 
+                  role: 'assistant', 
+                  content: innerHTML 
+              });
+          } 
+          // Check if the div itself has class 'message bot-message'
+          else if ($(this).hasClass('message user-message')) {
+              messagesList.push({ 
+                  role: 'user', 
+                  content: innerHTML 
+              });
+          }
+      });
+
+      // Log the list to the console (or handle it as needed)
+      return messagesList;
+    }
+
+      function getleadingqns(f) {
+        //After the full response from the bot has come, populate the leading question buttons
+        selectedFilename = $("#filename").val();
+        messagesList = getchatlog();
+        $.ajax({
+          url: "/raaigetleadingqns",
+          type: "POST",
+          processData: false,
+          contentType: "application/json",
+          data: JSON.stringify({filename: selectedFilename, previousmessages: JSON.stringify(messagesList)}),
+          success: function(data) {
+            console.log(data.response);
+            responseJson = JSON.parse(data.response);
+
+            $("#chat-spinner").hide();
+            $('#box-leading-qn').show();
+            $('#leading-qn1').html(responseJson.question1summary);
+            $('#leading-qn1').attr('data-label', responseJson.leadingquestion1);
+            $('#leading-qn2').html(responseJson.question2summary);
+            $('#leading-qn2').attr('data-label', responseJson.leadingquestion2);
+          }
+        });
+      }
+
+      function getnextairesponse() {
+        //After the full response from the bot has come, populate the leading question buttons
+        selectedFilename = $("#filename").val();
+        $.ajax({
+          url: "/raaigetleadingqns",
+          type: "POST",
+          processData: false,
+          contentType: "application/json",
+          data: JSON.stringify({filename: selectedFilename}),
+          success: function(data) {
+            console.log(data.response);
+            responseJson = JSON.parse(data.response);
+            introText = responseJson.introtext;
+            let botResponse = `
+                    <div class="message bot-message">
+                      ${introText}
+                    </div>`;           
+
+                  $("#chat-spinner").hide();
+                  $('#chat-box').append(botResponse);
+                  $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+                  $('#box-leading-qn').show();
+                  $('#leading-qn1').html(responseJson.question1summary);
+                  $('#leading-qn1').attr('data-label', responseJson.leadingquestion1);
+                  $('#leading-qn2').html(responseJson.question2summary);
+                  $('#leading-qn2').attr('data-label', responseJson.leadingquestion2);                  
+          }
+        });
+      }
+
+      function getQueryStringValue(key) {
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        return urlParams.get(key);
+      }      
+      $(document).ready(function(){
+        $("#left-panel").hide();
+        $("#pagination").hide();
+        //$("#overall-content").hide();
+        //reload page if this is a new chat so that the title comes on left pane
+        var isNewChat = "{% if new_chat is defined and new_chat == 'yes' %}yes{% else %}no{% endif %}";        
+
+          $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);                        
+
+          if ($("#filename").val() !== '') {
+            f=getQueryStringValue('f');
+            getleadingqns(f);
+          }
+
+          // Add an event listener for the 'click' event on links with ID starting with 'seeReferences'
+          $(document).on('click', 'a[id^="seeReferences"]', function(e) {
+              e.preventDefault();
+
+              // Execute your custom code for the "See References" link
+              console.log('See References link clicked');
+
+              // Access the data attribute value of the #seeReferences element
+              var dataValue = $(this).data('id');  // Using jQuery's data() method
+              console.log(dataValue);
+
+              // Check if dataValue is defined
+              if (typeof dataValue !== 'undefined') {
+                  // Append the dataValue to the id of the #popup to get the full unique id
+                  var fullUniqueId = dataValue;
+
+                  // Open the popup with the full unique id as a non-modal dialog
+                  $('#' + fullUniqueId).dialog({
+                      modal: false,
+                      width: 700,
+                      height: 500,
+                      closeText: "Close"
+                  });
+              } else {
+                  console.error('Data attribute "field" is not defined on the #seeReferences element.');
+              }
+          });
+
+
+
+          //Send Question to LLM
+          //$("#send-button").click(function(){
+          $('#chat-form').on('submit', function(e) {            
+            e.preventDefault();
+            $("#chat-spinner").show();
+
+            var fileSelected = $("#filelist-raai").val();
+            // Check if no options are selected or the array is empty
+            if(!fileSelected || fileSelected.length === 0) {
+                fileSelected = [];
+            }
+            let userInput = $('#user-input').val();
+            if (userInput.trim() !== '') {
+              let userMessage = `
+                  <div class="message user-message">
+                    ${userInput}
+                  </div>
+              `;
+
+              $('#chat-box').append(userMessage);
+              $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+              $userInput = $('#user-input').val();
+              $('#user-input').val('');
+              filename = $("#filename").val();
+              //Switching off search-type for raai
+              //var searchType = document.querySelector('input[name="search-type"]:checked').value;
+              var searchType = 'default';
+
+              /* This is the earlier approach without streaming. Retain it in case this is needed later.
+              $.ajax({
+                  url: "/",
+                  type: "POST",
+                  contentType: "application/json",
+                  data: JSON.stringify({user_text: $userInput, file_selected: ["all"], type: "docchat", filename: filename, search_type: searchType, new_chat: isNewChat}),
+                  success: function(data) {
+                    console.log(data);
+                    data = JSON.parse(data);
+                    if (data.new_chat === '1') {
+                      var f = data.f;  // Replace with your actual value or logic
+                      var currentBaseURL = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+                      var newURL = currentBaseURL + "?f=" + encodeURIComponent(f)+ "&type=docchat";
+                      window.location.href = newURL;
+                    }
+
+                    // convert markdown to HTML using marked
+                    let convertedData = window.marked(data.response);
+                    //alert(convertedData);
+                    
+                    //seeRefLink = loadSeeReferencePopup(data.metadata, data.id);
+                    //alert(data.metadata);
+                    let seeRefLink = (data && data.metadata !== undefined && data.id !== undefined && data.metadata !== '[]' && data.metadata !== '')?loadSeeReferencePopup(JSON.parse(data.metadata), data.id) : '';
+                    let botResponse = `
+                      <div class="message bot-message">
+                        ${convertedData}${seeRefLink}
+                      </div>`;           
+
+                    $("#chat-spinner").hide();
+                    $('#chat-box').append(botResponse);
+                    $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);                        
+                  }
+              }); */
+            
+              // Get or create the div for displaying the stream
+              const container = document.getElementById('chat-box'); // Parent element
+              let streamDiv, innerStreamDiv;
+              uniqueId = Math.random() * 1000000
+
+              if (!document.getElementById('streamDiv-'+uniqueId)) {
+                  streamDiv = document.createElement('div');
+                  streamDiv.id = 'streamDiv-'+uniqueId;
+                  let botResponse = `
+                    <div class="message bot-message" id="innerStreamDiv-${uniqueId}">
+                    </div>`;
+                  streamDiv.innerHTML += botResponse;                
+                  container.appendChild(streamDiv);
+                  $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);                        
+                  innerStreamDiv =  document.getElementById('innerStreamDiv-' + uniqueId);
+                  innerStreamDiv.innerHTML = 'Loading...';
+              } else {
+                  innerStreamDiv =  document.getElementById('innerStreamDiv-' + uniqueId);
+              }
+            
+            markdownFullText = '';
+            const queryParams = new URLSearchParams({
+              user_text: $userInput, // Automatically URI-encoded
+              type: 'docchat',
+              filename: filename, // Automatically URI-encoded
+              search_type: searchType,
+              new_chat: isNewChat,
+              chatlog: JSON.stringify(getchatlog()) // Automatically URI-encoded
+            });
+            const evtSource = new EventSource('/raairespond?' + queryParams.toString());
+
+            evtSource.onmessage = function(event) {
+              if (event.data) {
+                // Append the new message to the streamDiv
+                if (innerStreamDiv.innerHTML.trim() == 'Loading...') {
+                    innerStreamDiv.innerHTML = '';
+                  }
+                markdownFullText += event.data;
+                innerStreamDiv.innerHTML = markdownFullText;
+                $('#chat-box').append(streamDiv);
+                //$('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+              }
+            };
+
+            evtSource.addEventListener('finalOutput', function(event) {
+              data = JSON.parse(event.data);
+              var f = data.f;
+              /* if (data.new_chat === '1') {
+                var currentBaseURL = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+                var newURL = currentBaseURL + "/raai?f=" + encodeURIComponent(f)+ "&type=docchat";
+                window.location.href = newURL;
+              } */
+
+              let seeRefLink = (data && data.metadata !== undefined && data.id !== undefined && data.metadata !== '[]' && data.metadata !== '')?loadSeeReferencePopup(JSON.parse(data.metadata), data.id) : '';
+                  
+              innerStreamDiv.innerHTML = data.response+seeRefLink;
+              $('#chat-box').append(streamDiv);
+              $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+
+              evtSource.close();
+
+              getleadingqns(f);
+            });
+
+            evtSource.onerror = function(event) {
+                console.error('EventSource failed:', event);
+                evtSource.close();
+            };
+
+            }
+          });
+
+        //On clicking leading qn button send leading qn to ai
+        $('[id^="leading-qn"]').click(function() {
+          // Capture the text inside the div
+          var text = $(this).attr('data-label');
+          // Fill the captured text into the input element
+          $('#user-input').val(text);
+
+          // Trigger the form submission
+          $('#chat-form').submit();
+        });          
+      });
+
+      document.getElementById('closeButton').onclick = function() {
+        goBack();
+      };
+
+      function goBack() {
+        window.location.href = "/raai";
+      }
+  </script>
+  <!-- Bootstrap JS and Popper.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>

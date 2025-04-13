@@ -1,0 +1,695 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  body {
+      font-family: Arial, sans-serif;
+  }
+  .modal-dialog {
+        max-width: 700px;
+  }
+  #customProgressBar {
+    background-color: #4caf50; /* Green */
+    height: 20px; /* Increased height */
+    border-radius: 5px; /* Rounded corners */
+  }  
+</style>
+<div class="col-md-12">
+  <h2 class="mb-4 text-center">
+    File Processor
+  </h2>          
+    <!-- Trigger Modal -->
+    <!-- <a href="#" data-toggle="modal" data-target="#howItWorksModal">How it Works</a> -->
+    
+    <!-- Modal -->
+    <div class="modal fade" id="howItWorksModal" tabindex="-1" role="dialog" aria-labelledby="howItWorksModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="howItWorksModalLabel">How it Works</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Add your description here -->
+                    <p class="font-weight-bold">Purpose of this module: </p><p>Create a Bid Evaluation Report based on all the Bids received.</p>
+                    <p class="font-weight-bold">In brief: </p><p>Generate a fresh Bid Evaluation report or Open an old Report as a Template and update it based on new data, which has been uploaded as PDF docs in the DocChat section of File uploads.</p>
+                    <p class="font-weight-bold">Steps:</p>
+                      <ol>
+                      <li>First visit Upload Source Files section > DocChat and upload all Bids received as PDF files into an appropriately named Collection.</li>
+                      <li>On choosing Procurement, choose the appropriate Collection as Source for Bids received.</li>
+                      <li>For generating the Bid Eval report:
+                      <ol type="a">
+                        <li>You can either upload a template Bid report from your local computer.</li>
+                        <li>Or you can continue editing from where you left off by choosing from Saved files.</li>
+                        <li>Or you can Generate a Fresh Bid Report.</li>
+                        </ol>
+                      </li>
+                      <li>Once the file is loaded in the Editor, select any text and right click and choose "Update text". AI will bring up updated text below the selected text. The updated text matches the selected text, but uses the new data from the Collection chosen as Source for new Bid files.</li>
+                      </ol>
+                      <p class="font-weight-bold">Note: </p>
+                      <ol>
+                      <li>When you select text, it is best to go Section by Section so that the AI can correctly infer what the Section is about.</li>
+                      <li>Choose entire Section including the Title. If Section is longer than say 2 pages, then choose logically isolated portions of say 1-2 pages or so in length. Experiment with different selections so that you develop a sense of how to get the updated text to be appropriate, comprehensive and non-overlapping etc depending on your needs.</li>
+                      <li>Treat the AI updated text merely as a Draft. Do recheck the data given. It saves you time in drafting. But you still need to review the data.</li>
+                      <li>Remember: AI systems hallucinate and they sometimes make up believable data. So please recheck the datapoints from the source text to ensure that there is no hallucination.</li>
+                      </ol>
+                    <p>Have fun with the cutting edge and new way of doing work in AI-Human collaboration mode.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  <div class="card custom-card">
+    <div class="card-body">              
+        <div class="mb-3">
+    
+    <label for="collection">Collection Chosen: </label><div id="collection" style="display:inline;" class="font-weight-bold">--NA--</div>  
+    <div id="dc-collection-choice">
+      <label for="collectionDropdown">Please select a Collection from Uploaded Source files</label>            
+      <select id="collectionDropdown" name="collectionDropdown">
+      </select>
+      <button onclick="loadcollection()"  class="btn btn-primary">Select Collection</button>
+    </div>  
+    </div>
+    </div>
+    </div>
+
+    <div id="afterCollectionSelection">
+    <div class="card custom-card">
+      <div class="card-body">              
+        <div class="mb-3">
+          <label for="custom-instructions">Custom Instructions: </label> 
+          <textarea class="form-control" id="custom-instructions" rows="10" required>
+          </textarea>
+          <button onclick="saveCustomInstructions()" class="btn btn-secondary" style="float: right;">Save</button>          
+        </div>
+      </div>
+    </div>
+      
+
+    <div class="card custom-card">
+      <div class="card-body"> 
+        <div class="row text-center py-3">
+          <div class="col-md-9">
+            <h3>Metadata</h3>  
+          </div>
+          <div class="col-md-3" style="align-self: center;">
+            <button onclick="toggleContent('contentMetadata', 'toggleButtonMetadata')" id="toggleButtonMetadata" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.65rem;">Collapse</button>          
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div id="contentMetadata">
+        <div class="row text-center py-3">
+          <div class="col-md-12">
+            <button type="submit" class="btn btn-secondary" id="checkStatusMetadataBtn">Check Status</button>
+          </div>
+        </div>
+        <!-- Progress Indicators -->
+        <div class="row py-3 justify-content-center">
+          <div class="col-md-9">
+            <div class="progress">
+              <div id="customProgressBarMetadata" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+              </div>
+            </div>
+            <label id="progressBarLabelMetadata" class="text-center d-block"></label>
+          </div>
+        </div>
+        <div class="row py-3 text-center">
+          <div class="col-md-12">
+            <label for="metadataDisplay" class="text-center d-block">List of metadata fields & description</label>
+            
+            <!-- Non-editable display area -->
+            <div id="metadataDisplay" style="white-space: pre-wrap; border: 1px solid #ced4da; padding: .375rem .75rem; border-radius: .25rem; margin-bottom: .5rem;">
+                <!-- Your metadata list will go here -->
+                If empty, you could Press Edit below and add your own Metadata list in the following format:<br>
+                field1 name: field description
+                field2 name: field description
+            </div>
+        
+            <!-- Edit link -->
+            <a href="#" id="editLink" onclick="makeEditable()">Edit</a>
+        
+            <!-- Editable textarea, hidden initially -->
+            <textarea class="form-control" id="metadataPrompt" rows="10" required style="display: none;"></textarea>
+          </div>
+          <div class="col-md-6 pb-2">
+            <button type="submit" class="btn btn-secondary" id="populateMetadataBtn">Populate Remaining Metadata</button>
+          </div>
+          <div class="col-md-6 pb-2">
+            <button type="submit" class="btn btn-secondary" id="metadataUpdateBtn">Redo All Metadata</button>
+          </div>          
+          <div class="col-md-11">
+            <div class="sine-wave-loader spinner" id="metadataSpinner"></div>
+          </div>        
+        </div>
+        <div class="row py-3">
+          <div class="col-md-12 text-center">
+            <button type="submit" class="btn btn-secondary" id="downloadMetadataBtn">Download</button>
+          </div>
+        </div>
+      
+      </div>
+      </div>
+    </div>
+
+    <div class="card custom-card">
+      <div class="card-body">              
+        <div class="row text-center py-3">
+          <div class="col-md-9">
+            <h3>Summarise Files</h3>              
+          </div>
+          <div class="col-md-3" style="align-self: center;">
+            <button onclick="toggleContent('contentSummary', 'toggleButtonSummary')" id="toggleButtonSummary" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.65rem;">Collapse</button>          
+          </div>
+        </div>
+
+        
+        <!-- Action Buttons -->
+        <div id="contentSummary">
+        <div class="row text-center py-3">
+          <div class="col-md-12">
+            <button type="submit" class="btn btn-secondary" id="checkStatusSummariseBtn">Check Status</button>
+          </div>
+        </div>
+
+        <!-- Progress Indicators -->
+        <div class="row py-3 justify-content-center">
+          <div class="col-md-9">
+            <div class="progress">
+              <div id="customProgressBar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+              </div>
+            </div>
+            <label id="progressBarLabel" class="text-center d-block"></label>
+          </div>
+        </div>
+        <div class="row text-center py-3">
+          <div class="col-md-12">
+            <label for="sampleShortSummaryDisplay" class="text-center d-block">Sample Short Summary</label>
+            <!-- Non-editable display area -->
+            <div id="sampleShortSummaryDisplay" style="white-space: pre-wrap; border: 1px solid #ced4da; padding: .375rem .75rem; border-radius: .25rem; margin-bottom: .5rem;">
+            </div>
+          </div>
+          <div class="col-md-12">
+            <label for="sampleLongSummaryDisplay" class="text-center d-block">Sample Long Summary</label>
+            <!-- Non-editable display area -->
+            <div id="sampleLongSummaryDisplay" style="white-space: pre-wrap; border: 1px solid #ced4da; padding: .375rem .75rem; border-radius: .25rem; margin-bottom: .5rem;">
+            </div>
+          </div>          
+
+          <div class="col-md-6 pb-2">
+            <button type="submit" class="btn btn-secondary" id="summarizeBtn">Summarize Remaining Files</button>
+          </div>
+          <div class="col-md-6 pb-2">
+            <button type="submit" class="btn btn-secondary" id="summaryUpdateBtn">Redo All Summaries</button>
+          </div>
+          <div class="col-md-11">
+            <div class="sine-wave-loader spinner" id="summarizeSpinner"></div>
+          </div>
+        </div>
+
+        <div class="row py-3">
+          <div class="col-md-12 text-center">
+            <button type="submit" class="btn btn-secondary" id="downloadSummariseBtn">Download</button>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function loadcollection() {
+    const dropdown = document.getElementById('collectionDropdown');
+    collection = dropdown.value;
+    //alert('Loaded file: ' + dataanalysis_filename);
+    $("#dc-collection-choice").hide();
+    $("#collection").html(collection);
+    $("#afterCollectionSelection").show();
+    checkStatusSummarise();
+    displaySampleSummary();
+    checkStatusMetadata();
+    displayMetadataPrompt();
+    displayCustomInstructions();
+    // You can further use the dataanalysis_filename in your script as needed
+  }
+
+  function toggleContent(elementName, buttonName) {
+    var content = document.getElementById(elementName);
+    var button = document.getElementById(buttonName);
+    if (content.style.display === "none") {
+        content.style.display = "block";
+        button.innerHTML = "Collapse";
+    } else {
+        content.style.display = "none";
+        button.innerHTML = "Expand";
+    }
+  }
+
+  function checkStatusSummarise() {
+
+    // Get the selected collection from the dropdown
+    var selectedCollection = $('#collectionDropdown').val();
+
+    // Perform the AJAX POST request
+    $.ajax({
+        url: '/checkstatus',  // Replace with your Flask endpoint URL
+        type: 'POST',
+        data: { collection: selectedCollection, type: 'summarise' },
+        dataType: 'json', // Expecting JSON response
+        success: function(response) {
+            // Process the response here
+            console.log("Total files in collection: " + response.total_files);
+            console.log("Files with metadata entry: " + response.files_with_metadata);
+            updateProgressBarSummarise(response.total_files, response.files_with_metadata);
+        },
+        error: function(xhr, status, error) {
+            // Handle any errors here
+            console.error("Error: " + error);
+        }
+    });    
+  }
+
+function displaySampleSummary() {
+  // Get the selected collection from the dropdown
+  var selectedCollection = $('#collectionDropdown').val();
+
+  // Get sample summaries for display
+  $.ajax({
+    url: '/getsamplesummary',  // Replace with your server endpoint
+    type: 'POST',
+    data: { collection: selectedCollection },
+    success: function(response) {
+        // Log the response to the console
+        console.log(response);
+        $('#sampleShortSummaryDisplay').html(response.summary_short);
+        $('#sampleLongSummaryDisplay').html(response.summary_long);
+    },
+    error: function(xhr, status, error) {
+        // Handle errors here
+        console.error(error);
+    }
+  });
+}
+
+function checkStatusMetadata() {
+
+// Get the selected collection from the dropdown
+var selectedCollection = $('#collectionDropdown').val();
+
+// Perform the AJAX POST request
+$.ajax({
+    url: '/checkstatus',  // Replace with your Flask endpoint URL
+    type: 'POST',
+    data: { collection: selectedCollection, type: 'metadata'  },
+    dataType: 'json', // Expecting JSON response
+    success: function(response) {
+        // Process the response here
+        console.log("Total files in collection: " + response.total_files);
+        console.log("Files with metadata entry: " + response.files_with_metadata);
+        updateProgressBarMetadata(response.total_files, response.files_with_metadata);
+    },
+    error: function(xhr, status, error) {
+        // Handle any errors here
+        console.error("Error: " + error);
+    }
+});    
+}
+
+function displayMetadataPrompt() {
+  // Get the selected collection from the dropdown
+  var selectedCollection = $('#collectionDropdown').val();
+
+  // Perform the AJAX POST request
+  $.ajax({
+      url: '/getmetadataprompt',  // Replace with your Flask endpoint URL
+      type: 'POST',
+      data: { collection: selectedCollection  },
+      dataType: 'json', // Expecting JSON response
+      success: function(response) {
+        // Process the response here
+        if (response !== '' && response !== null)
+          $("#metadataDisplay").html(response);
+      },
+      error: function(xhr, status, error) {
+          // Handle any errors here
+          console.error("Error: " + error);
+      }
+  });    
+}
+  function updateProgressBarSummarise(total, completed) {
+    // Calculate the percentage of completion
+    var percent = (completed / total) * 100;
+
+    // Update the progress bar
+    var progressBar = document.getElementById('customProgressBar');
+    var progressBarLabel = document.getElementById('progressBarLabel');
+    progressBar.style.width = percent + '%';
+    progressBar.setAttribute('aria-valuenow', percent);
+    //progressBar.textContent = percent.toFixed(2) + '%'; // Showing 2 decimal places
+    progressBarLabel.textContent = completed.toString() + " out of " + total.toString() + " files summarised";
+
+    if (total == completed) {
+      $('#summarizeBtn').prop("disabled", true);
+    } else {
+      $('#summarizeBtn').prop("disabled", false);
+    }
+    
+    if (completed > 0) {
+      $('#downloadSummariseBtn').prop("disabled", false);
+    } else {
+      $('#downloadSummariseBtn').prop("disabled", true);
+      $('#summaryUpdateBtn').prop("disabled", true);
+    }
+
+  }
+
+  function updateProgressBarMetadata(total, completed) {
+    // Calculate the percentage of completion
+    var percent = (completed / total) * 100;
+
+    // Update the progress bar
+    var progressBar = document.getElementById('customProgressBarMetadata');
+    var progressBarLabel = document.getElementById('progressBarLabelMetadata');
+    progressBar.style.width = percent + '%';
+    progressBar.setAttribute('aria-valuenow', percent);
+    //progressBar.textContent = percent.toFixed(2) + '%'; // Showing 2 decimal places
+    progressBarLabel.textContent = completed.toString() + " out of " + total.toString() + " files populated";
+
+    if (total == completed) {
+      $('#populateMetadataBtn').prop("disabled", true);
+    } else {
+      $('#populateMetadataBtn').prop("disabled", false);
+    }
+    
+    if (completed > 0) {
+      $('#downloadMetadataBtn').prop("disabled", false);
+    } else {
+      $('#downloadMetadataBtn').prop("disabled", true);
+      $('#metadataUpdateBtn').prop("disabled", true);
+    }
+
+  }
+
+  function makeEditable() {
+    var displayDiv = document.getElementById('metadataDisplay');
+    var textArea = document.getElementById('metadataPrompt');
+    textArea.value = displayDiv.innerText;
+    displayDiv.style.display = 'none';
+    textArea.style.display = 'block';
+    document.getElementById('editLink').style.display = 'none';
+  }
+
+  function saveContent() {
+      var textArea = document.getElementById('metadataPrompt');
+      var data = textArea.value;
+      // Get the selected collection from the dropdown
+      var selectedCollection = $('#collectionDropdown').val();      
+      // AJAX call to Flask backend
+      $.ajax({
+          url: '/metadatasave', // Set this to your Flask route
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ content: data, collection: selectedCollection }),
+          success: function(response) {
+              // Handle success
+              console.log('Saved:', response);
+          },
+          error: function(error) {
+              // Handle error
+              console.error('Error:', error);
+          }
+      });
+  }
+
+  function saveCustomInstructions() {
+    var textArea = document.getElementById('custom-instructions');
+      var data = textArea.value;
+      // Get the selected collection from the dropdown
+      var selectedCollection = $('#collectionDropdown').val();      
+      // AJAX call to Flask backend
+      $.ajax({
+          url: '/savecustominstructions', // Set this to your Flask route
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ content: data, collection: selectedCollection }),
+          success: function(response) {
+              // Handle success
+              console.log('Saved:', response);
+          },
+          error: function(error) {
+              // Handle error
+              console.error('Error:', error);
+          }
+      });    
+  }
+
+  function displayCustomInstructions() {
+    var selectedCollection = $('#collectionDropdown').val();    
+    // Get Custom Instructions
+    $.ajax({
+        url: '/getcustominstructions',  // Replace with your server endpoint
+        type: 'POST',
+        data: { collection: selectedCollection },
+        success: function(response) {
+          console.log(response);
+          var textArea = document.getElementById('custom-instructions');
+          textArea.value = response.custom_instructions;
+        }
+    });
+  }
+
+
+  $(document).ready(function(){
+    $("#afterCollectionSelection").hide();    
+    $('#summarizeSpinner').hide();
+    $('#metadataSpinner').hide();
+
+    // Event listener for changes in the textarea
+    document.getElementById('metadataPrompt').addEventListener('change', saveContent);
+
+    $.ajax({
+      url: "/folderlist2",
+      type: "POST",
+      processData: false,
+      contentType: "application/json",
+      data: JSON.stringify({type: "{{ type }}"}),
+      success: function(data) {
+        //Add options to select list for each item on data.result
+        var select = $("#collectionDropdown");
+        select.empty(); // empty the select 
+
+        // List each file one by one
+        data.result.forEach(function(item){
+        option = $("<option></option>")
+            .attr("value", item.collection)
+            .text(item.collection);
+        select.append(option);
+        });
+      }
+    }); 
+
+    $('#summarizeBtn').click(function() {
+      // Get the selected value from the dropdown
+      var selectedCollection = $('#collectionDropdown').val();
+      $('#summarizeBtn').prop("disabled", true);
+      $('#summarizeSpinner').show();
+      
+      // Perform the AJAX POST request
+      $.ajax({
+          url: '/summarize',  // Replace with your server endpoint
+          type: 'POST',
+          data: { collection: selectedCollection },
+          success: function(response) {
+              // Log the response to the console
+              console.log(response);
+              $('#summarizeSpinner').hide();
+              $('#sampleShortSummaryDisplay').html(response.summary[0].summary_short);
+              $('#sampleLongSummaryDisplay').html(response.summary[0].summary_long);
+              checkStatusSummarise();
+          },
+          error: function(xhr, status, error) {
+              // Handle errors here
+              console.error(error);
+          }
+      });
+    });
+
+    $('#summaryUpdateBtn').click(function() {
+      var confirmation = confirm("Are you sure?");
+      if (confirmation) {
+        // Get the selected value from the dropdown
+        var selectedCollection = $('#collectionDropdown').val();
+        $('#summaryUpdateBtn').prop("disabled", true);
+        $('#summarizeSpinner').show();
+        
+        // Perform the AJAX POST request
+        $.ajax({
+            url: '/summaryupdate',  // Replace with your server endpoint
+            type: 'POST',
+            data: { collection: selectedCollection },
+            success: function(response) {
+                // Log the response to the console
+                console.log(response);
+                $('#summaryUpdateBtn').prop("disabled", false);
+                $('#summarizeSpinner').hide();
+                $('#sampleShortSummaryDisplay').html(response.summary[0].summary_short);
+                $('#sampleLongSummaryDisplay').html(response.summary[0].summary_long);
+                checkStatusSummarise();
+            },
+            error: function(xhr, status, error) {
+                // Handle errors here
+                console.error(error);
+            }
+        });
+      }
+    });
+
+    $('#checkStatusSummariseBtn').click(function() {
+      checkStatusSummarise();
+    });        
+    $('#checkStatusMetadataBtn').click(function() {
+      checkStatusMetadata();
+    });            
+
+    function downloadCSV(jsonData, fileName) {
+      // Convert JSON data to CSV
+      var csv = convertToCSV(jsonData);
+
+      // Create a Blob with CSV data
+      var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+      // Create a link to download the Blob as a file
+      var downloadLink = document.createElement("a");
+      var url = URL.createObjectURL(blob);
+      downloadLink.href = url;
+      downloadLink.download = fileName;
+
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    }
+
+  function convertToCSV(objArray) {
+    var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+    var str = '';
+
+    // Extract headers
+    var header = Object.keys(array[0]).map(field => `"${field}"`).join(',') + '\r\n';
+    str += header;
+
+    // Extract rows
+    for (var i = 0; i < array.length; i++) {
+        var line = '';
+        for (var index in array[i]) {
+            if (line != '') line += ',';
+            var value = array[i][index] ? array[i][index].toString() : "";
+            // Enclose field values in quotes and escape existing quotes
+            line += `"${value.replace(/"/g, '""')}"`;
+        }
+        str += line + '\r\n';
+    }
+    return str;
+  }
+
+
+
+    $('#downloadSummariseBtn').click(function() {
+      // Get the selected value from the dropdown
+      var selectedCollection = $('#collectionDropdown').val();
+
+      $.ajax({
+          url: '/download', // Your Flask endpoint
+          type: 'POST',
+          data: { collection: selectedCollection, type: 'summarise' },
+          success: function(response) {
+              console.log(response);
+              // Call function to convert data to CSV and download
+              downloadCSV(response, "Summary_of_Documents_in_Collection.csv");
+          },
+          error: function(xhr, status, error) {
+              console.error("Error: " + error);
+          }
+      });
+    });
+
+    $('#populateMetadataBtn').click(function() {
+      // Get the selected value from the dropdown
+      var selectedCollection = $('#collectionDropdown').val();
+      $('#populateMetadataBtn').prop("disabled", true);
+      $('#metadataSpinner').show();
+      $.ajax({
+          url: '/populatemetadata', // Your Flask endpoint
+          type: 'POST',
+          data: { collection: selectedCollection },
+          success: function(response) {
+              console.log(response);
+              $('#metadataSpinner').hide();
+              checkStatusMetadata();
+          },
+          error: function(xhr, status, error) {
+              console.error("Error: " + error);
+          }
+      });
+    });
+
+    $('#metadataUpdateBtn').click(function() {
+      var confirmation = confirm("Are you sure?");
+      if (confirmation) {
+        // Get the selected value from the dropdown
+        var selectedCollection = $('#collectionDropdown').val();
+        $('#metadataUpdateBtn').prop("disabled", true);
+        $('#metadataSpinner').show();
+        
+        // Perform the AJAX POST request
+        $.ajax({
+            url: '/metadataupdate',  // Replace with your server endpoint
+            type: 'POST',
+            data: { collection: selectedCollection },
+            success: function(response) {
+                // Log the response to the console
+                console.log(response);
+                $('#metadataUpdateBtn').prop("disabled", false);
+                $('#metadataSpinner').hide();
+                checkStatusMetadata();
+            },
+            error: function(xhr, status, error) {
+                // Handle errors here
+                console.error(error);
+            }
+        });
+      }
+    });
+
+    $('#downloadMetadataBtn').click(function() {
+      // Get the selected value from the dropdown
+      var selectedCollection = $('#collectionDropdown').val();
+
+      $.ajax({
+          url: '/download', // Your Flask endpoint
+          type: 'POST',
+          data: { collection: selectedCollection, type: 'metadata'  },
+          success: function(response) {
+              console.log(response);
+              // Call function to convert data to CSV and download
+              downloadCSV(response, "Metadata_of_Documents_in_Collection.csv");
+          },
+          error: function(xhr, status, error) {
+              console.error("Error: " + error);
+          }
+      });
+    });
+
+
+  });
+</script>
+{% endblock %}

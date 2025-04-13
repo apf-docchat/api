@@ -1,0 +1,195 @@
+openapi: 3.0.0
+info:
+  title: Candidate Application Tracking System
+  description: API for managing candidate applications, filtering resumes, and retrieving CVs.
+  version: 1.0.0
+
+servers:
+  - url: https://api.jobportal.com
+    description: Production server
+  - url: http://localhost:5000
+    description: Local development server
+
+paths:
+  /candidates:
+    post:
+      summary: Upload a candidate's CV for a specific job
+      description: Candidates submit their CV for a job posting.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [job_id, name, email, file]
+              properties:
+                job_id:
+                  type: integer
+                  example: 12345
+                name:
+                  type: string
+                  example: "John Doe"
+                email:
+                  type: string
+                  format: email
+                  example: "johndoe@example.com"
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Successfully uploaded candidate CV
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  candidate_id:
+                    type: integer
+                    example: 101
+                  message:
+                    type: string
+                    example: "CV uploaded successfully"
+        "400":
+          description: Invalid request
+        "500":
+          description: Server error
+
+  /candidates/filter:
+    post:
+      summary: Filter candidates based on job_id and criteria
+      description: Retrieve filtered candidate IDs or CV files based on job and criteria.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [job_id, return_type, criteria]
+              properties:
+                job_id:
+                  type: integer
+                  example: 12345
+                return_type:
+                  type: string
+                  enum: [candidate_ids, cv_files]
+                  example: "candidate_ids"
+                criteria:
+                  type: array
+                  items:
+                    type: object
+                    required: [name, description, value]
+                    properties:
+                      name:
+                        type: string
+                        example: "degree"
+                      description:
+                        type: string
+                        example: "Educational qualification"
+                      value:
+                        type: string
+                        example: "B.Tech"
+      responses:
+        "200":
+          description: Filtered candidates returned
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      candidate_ids:
+                        type: array
+                        items:
+                          type: integer
+                        example: [101, 102, 103]
+                  - type: object
+                    properties:
+                      files:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            candidate_id:
+                              type: integer
+                              example: 101
+                            filename:
+                              type: string
+                              example: "John_Doe_CV.pdf"
+                            content:
+                              type: string
+                              format: binary
+        "400":
+          description: Invalid request
+        "404":
+          description: No matching candidates found
+        "500":
+          description: Server error
+
+  /candidates/{candidate_id}:
+    get:
+      summary: Retrieve candidate details
+      description: Fetch candidate profile and CV download link.
+      parameters:
+        - name: candidate_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 101
+      responses:
+        "200":
+          description: Candidate details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  candidate_id:
+                    type: integer
+                    example: 101
+                  name:
+                    type: string
+                    example: "John Doe"
+                  email:
+                    type: string
+                    format: email
+                    example: "johndoe@example.com"
+                  degree:
+                    type: string
+                    example: "B.Tech"
+                  experience:
+                    type: integer
+                    example: 5
+                  cv_url:
+                    type: string
+                    format: uri
+                    example: "https://api.jobportal.com/cvs/101/download"
+        "404":
+          description: Candidate not found
+        "500":
+          description: Server error
+
+  /cvs/{candidate_id}/download:
+    get:
+      summary: Download a candidate's CV
+      description: Fetch the CV file of a specific candidate.
+      parameters:
+        - name: candidate_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 101
+      responses:
+        "200":
+          description: CV file download
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: CV not found
+        "500":
+          description: Server error

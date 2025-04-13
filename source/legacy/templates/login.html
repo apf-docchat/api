@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Login</title>
+    <!-- Add Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Custom styles */
+        body {
+            /* You can use a gradient or a background image */
+            background: linear-gradient(to right, #00c6ff, #0072ff); /* Example gradient */
+            /* background-image: url('path_to_your_image.jpg'); */ /* Uncomment this if using a background image */
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .sso-button {
+            margin-top: 20px;
+            background-color: #0072ff;
+            border-color: #0072ff;
+        }
+                
+        #messageBox {
+            background-color: #f8d7da; /* Light red background */
+            color: #721c24; /* Dark red text */
+            border-radius: 5px; /* Rounded corners */
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #f5c6cb; /* Light red border */
+            font-family: Arial, sans-serif; /* System-like font */
+        }        
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                {% if not orgs %}
+                    <div class="login-container">
+                        <h1 class="mb-4 text-center">Login</h1>
+                        {% if message %}
+                            <div id="messageBox" role="alert">
+                                <span id="messageContent">{{message}}</span>
+                            </div>
+                        {% endif %}
+                        {% if 'username-pwd' in auth_methods  %}
+                        <form action="/login" method="post">
+                            <div class="form-group">
+                                <label for="username">Username:</label>
+                                <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username">
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password:</label>
+                                <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Submit</button>
+                        </form>
+                        {% endif %}
+                        {% if 'ms365' in auth_methods  %}
+                        <!-- SSO with Microsoft 365 -->
+                        <a href="/loginms365" class="btn btn-primary btn-block sso-button">Login with Microsoft 365</a>
+                        {% endif %}
+                        {% if not auth_methods or auth_methods|length == 0 %}
+                        <label>No login method setup for this site. Contact Site Admin.</label>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="login-container">
+                        <h1 class="mb-4 text-center">Choose an Org</h1>
+                        <form action="/selectorg" method="post">
+                            <!-- Organizations List -->
+                            <div class="form-group">
+                                {% for org in orgs %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="orgname" id="org{{ loop.index }}" value="{{ org }}">
+                                    <label class="form-check-label" for="org{{ loop.index }}">
+                                        {{ org }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Submit</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Bootstrap JS and Popper.js -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>

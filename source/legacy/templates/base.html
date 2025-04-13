@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocChat</title>
+  <!-- CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@3.0.7/marked.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha512-q+4liFwdPC/bNdhUpZx6aXDx/h77yEQtn4I1slHydcbZK34nLaR3cAeYSJshoxIOq3mjEf7xJE8YWIUHMn+oCQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+</head>
+
+<body>
+  <div class="container-fluid">
+    <div class="full-page">
+        <div class="row">
+            <div class="col-md-3" id="left-panel" style="overflow-x: hidden;">
+                <div class="d-flex justify-content-end mb-2">
+                    <div class="dropdown">
+                        <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="profileDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="profileDropdown">
+                            <a class="dropdown-item" href="/logout">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2">
+                  <h5 class="font-weight-bold mb-2">Manage Source Files</h5>
+                  <a href="/docupload?type=docchat" class="btn btn-outline-primary mb-2 w-100 {{ 'active' if active_page == '/docupload/docchat' else '' }}" style="font-size: 0.8rem;">DocChat</a>
+                  <a href="/docupload?type=dataanalysis" class="btn btn-outline-primary w-100 {{ 'active' if active_page == '/docupload/dataanalysis' else '' }}" style="font-size: 0.8rem;">Data Analysis</a>
+                </div>                
+                <div class="mb-2">
+                    <h5 class="font-weight-bold mb-2">Modules</h5>
+                    <!-- <form id="chat-form2" method="post" action="newchat">
+                        <button class="btn btn-outline-primary mb-2 w-100 {{ 'active' if active_page == '/newchat' or active_page == '/' else '' }}" style="font-size: 0.8rem;">Doc Chat</button>
+                    </form>
+                    <form id="chat-form3" method="post" action="newdataanalysis">
+                        <button class="btn btn-outline-primary mb-2 w-100 {{ 'active' if active_page == '/newdataanalysis' else '' }}" style="font-size: 0.8rem;">Data Analysis</button>
+                    </form>
+                    <form id="chat-form4" method="post" action="templateedit">
+                        <button class="btn btn-outline-primary mb-2 w-100 {{ 'active' if active_page == '/templateedit' else '' }}" style="font-size: 0.8rem;">Template Editor</button>
+                    </form>
+                    <form id="chat-form5" method="post" action="procurement">
+                        <button class="btn btn-outline-primary mb-2 w-100 {{ 'active' if active_page == '/procurement' else '' }}" style="font-size: 0.8rem;">Procurement-Bid Evaluation</button>
+                    </form> -->
+                    {% for module in modules %}
+                        <form id="chat-form{{ loop.index0 + 2 }}" method="post" action="{{ module.form_action }}">
+                            <button class="btn btn-outline-primary mb-2 w-100 {{ 'active' if active_page == '/' + module.form_action or (loop.index0 == 0 and active_page == '/') else '' }}" style="font-size: 0.8rem;">{{ module.button_text }}</button>
+                        </form>
+                    {% endfor %}
+                
+                </div>
+                <!-- {% if old_chats|length > 0 %}
+                  <div class="mb-2 session-logs" style="max-height: 50vh; overflow-y: auto;">
+                      <h5 class="font-weight-bold mb-2">Session Logs</h5>
+                      <ul class="list-group">
+                          {% for chat in old_chats %}
+                              {% if current_file == chat[0] %}
+                                  <li class="list-group-item py-1" style="font-size: 0.7rem;">{{ chat[1]}}</li>
+                              {% else %}
+                                  <li class="list-group-item py-1" style="font-size: 0.7rem;"><a href="#" data-chat-id="{{ chat[0] }}">{{ chat[1]}}</a></li>
+                              {% endif %}
+                          {% endfor %}
+                      </ul>
+                  </div>
+                {% endif %} -->
+                {% if old_chats|length > 0 %}
+                <div class="mb-2 session-logs" style="max-height: 50vh; overflow-y: auto;">
+                    <h5 class="font-weight-bold mb-2">Session Logs</h5>
+                    <ul class="list-group">
+                        {% for chat in old_chats %}
+                            <!-- {% if current_file == chat[0] %}
+                                <li class="list-group-item py-1" style="font-size: 0.7rem;">{{ chat[1]}}</li>
+                            {% else %} -->
+                                <li class="list-group-item py-1" style="font-size: 0.7rem;"><a href="#" data-chat-id="{{ chat[0] }}">{{ chat[1]}}</a></li>
+                            <!-- {% endif %} -->
+                        {% endfor %}
+                    </ul>
+                </div>
+              {% endif %}                
+            </div>
+            <div class="col-md-9" style="overflow-x: hidden;display: flex; flex-direction: column;">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+
+  <!-- Bootstrap JS and Popper.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+  {% block scripts %}{% endblock %}
+  <script>
+    $(document).ready(function() {
+      $('a[data-chat-id]').click(function(event) {
+          event.preventDefault();  // prevent the default action
+
+          var chatId = $(this).data('chat-id');
+          var currentBaseURL = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+          var newURL = currentBaseURL + "?f=" + encodeURIComponent(chatId);
+          window.location.href = newURL;
+      });
+    });
+  </script>
+
+  <!-- Bootstrap JS -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js"
+  integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+  crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js"
+  integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+  crossorigin="anonymous"></script>   -->
+</body>
+</html>

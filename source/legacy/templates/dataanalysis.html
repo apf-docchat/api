@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+      <!-- <div class="row"> -->
+        <!-- <div class="col-md-8 offset-md-2"> -->
+          {% if not dataanalysis_filename %}
+            <!-- Display dropdown if dataanalysis_filename is not set -->
+            <div id="da-file-choice">
+              <label for="fileDropdown" class="font-weight-bold">Please select a file for Data Analysis:</label>            
+              <select id="fileDropdown">
+              </select>
+              <button onclick="loadFile()"  class="btn btn-primary">Select File</button>
+            </div>
+          {% endif %}          
+            <label for="dataanalysis_filename">File chosen for Data Analysis: </label><b><div id="dataanalysis_filename" style="display:inline;">{{dataanalysis_filename}}</div></b>
+            <div id="chat-box">
+              {% for chatlog in old_chat_logs %}
+                  <div class="message user-message">
+                    <div class="card">
+                        <div class="card-body">
+                          {{chatlog[1] | safe}}
+                        </div>
+                      </div>
+                  </div>                        
+                
+                  <div class="message bot-message">
+                    <div class="card">
+                        <div class="card-body">
+                          {{chatlog[2] | safe}}
+                        </div>
+                      </div>
+                  </div>
+              {% endfor %}
+
+                <div class="message bot-message">
+                    <div class="card">
+                        <div class="card-body">
+                            Hello! How can I assist you today?
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <form id="chat-form" method="post">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="user-input" placeholder="Type your Data analysis question...">
+                </div>
+                <div class="spinner" id="chat-spinner">Loading...</div>                
+                <button type="submit" class="btn btn-primary">Send</button>
+            </form>
+        <!-- </div> -->
+      <!-- </div> -->
+  <!-- </div> -->
+  {% endblock %}
+
+  {% block scripts %}
+    {% if not dataanalysis_filename %}  
+    <script>
+      function loadFile() {
+          const dropdown = document.getElementById('fileDropdown');
+          dataanalysis_filename = dropdown.value;
+          //alert('Loaded file: ' + dataanalysis_filename);
+          $("#chat-box").show();
+          $("#chat-form").show();  
+          $("#da-file-choice").hide();
+          $("#dataanalysis_filename").html(dataanalysis_filename);
+          // You can further use the dataanalysis_filename in your script as needed
+      }      
+      $(document).ready(function(){        
+        $("#chat-box").hide();
+        $("#chat-form").hide();
+        $.ajax({
+          url: "/filelist",
+          type: "POST",
+          processData: false,
+          contentType: "application/json",
+          data: JSON.stringify({type: "dataanalysis"}),
+          success: function(data) {
+            //Add options to select list for each item on data.result
+            var select = $("#fileDropdown");
+            select.empty(); // empty the select 
+            /* var option = $("<option></option>")
+            .attr("value", "")
+            .text("All");
+            select.append(option);       */
+
+            // List each file one by one
+            data.result.forEach(function(item){
+            option = $("<option></option>")
+                .attr("value", item.filename)
+                .text(item.filename);
+            select.append(option);
+            });
+          }
+        });
+      });
+    </script>
+    {% endif %}
+
+
+  <script>
+
+      $(document).ready(function(){
+
+          $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);                        
+
+          //Send Question to LLM
+          //$("#send-button").click(function(){
+          $('#chat-form').on('submit', function(e) {            
+            e.preventDefault();
+            $("#chat-spinner").show();
+
+            var fileSelected = $("#filelist").val();
+            // Check if no options are selected or the array is empty
+            if(!fileSelected || fileSelected.length === 0) {
+                fileSelected = [];
+            }
+            let userInput = $('#user-input').val();
+            if (userInput.trim() !== '') {
+              let userMessage = `
+                  <div class="message user-message">
+                      <div class="card">
+                          <div class="card-body">
+                              ${userInput}
+                          </div>
+                      </div>
+                  </div>
+              `;
+
+              $('#chat-box').append(userMessage);
+              $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+              $userInput = $('#user-input').val();
+              $('#user-input').val('');
+              dataanalysis_filename = $("#dataanalysis_filename").html();
+              collection = $("#collection").html();
+              //mainContext = this;
+              $.ajax({
+                  url: "/dataanalysis",
+                  type: "POST",
+                  contentType: "application/json",
+                  data: JSON.stringify({user_text: $userInput, file_selected: ["all"], type: "dataanalysis", dataanalysis_filename: dataanalysis_filename, collection: collection}),
+                  success: function(data) {
+                    //reload page if this is a new chat so that the title comes on left pane
+                    //var isNewChat = "{% if new_chat is defined and new_chat == 'yes' %}true{% else %}false{% endif %}";
+                    console.log(data);
+                    data = JSON.parse(data);
+                    if (data.new_chat === '1') {
+                      var f = data.f;  // Replace with your actual value or logic
+                      var currentBaseURL = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+                      var newURL = currentBaseURL + "?f=" + encodeURIComponent(f)+ "&type=dataanalysis";
+                      window.location.href = newURL;
+                    }
+
+                    // convert markdown to HTML using marked
+                    let convertedData = window.marked(data.response);
+                    //alert(convertedData);
+                    
+                    let botResponse = `
+                      <div class="message bot-message">
+                          <div class="card">
+                              <div class="card-body">
+                                  ${convertedData}
+                              </div>
+                          </div>
+                      </div>`;           
+
+                    $("#chat-spinner").hide();
+                    $('#chat-box').append(botResponse);
+                    $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);                        
+                  }
+              });
+            }
+          });
+      });
+  </script>
+  {% endblock %}

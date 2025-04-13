@@ -1,0 +1,2995 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "This is Process Wiz App.",
+    "version": "1.0.0",
+    "title": "Process Wiz"
+  },
+  "host": "api.pwdev.internal.nlightnconsulting.com",
+  "basePath": "/api/v1",
+  "tags": [
+    {
+      "name": "Collection",
+      "description": "All APIs related to collections"
+    },
+    {
+      "name": "User",
+      "description": "API for user related information"
+    },
+    {
+      "name": "File",
+      "description": "All APIs related to files"
+    },
+    {
+      "name": "DocChat",
+      "description": "API for doc chat"
+    },
+    {
+      "name": "DocGuide",
+      "description": "API for doc guide chat"
+    },
+    {
+      "name": "FileProcessor",
+      "description": "API for perform file processing operations (Admin APIs)"
+    },
+    {
+      "name": "Threads",
+      "description": "API for get information about chat threads"
+    },
+    {
+      "name": "AskDoc",
+      "description": "API for ask doc chat"
+    },
+    {
+      "name": "DocAnalysis",
+      "description": "API for doc analysis chat"
+    }
+  ],
+  "schemes": [
+    "https"
+  ],
+  "paths": {
+    "/collection": {
+      "get": {
+        "tags": [
+          "Collection"
+        ],
+        "description": "Get all collections including files.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "collection_name",
+            "description": "To filter by collection name.",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/CollectionResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Collection"
+        ],
+        "description": "Create a new collection.",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Collection object that needs to be added.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateCollection"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/user": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "description": "Get user information.",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "first_name": {
+                      "type": "string"
+                    },
+                    "last_name": {
+                      "type": "string"
+                    },
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "MEMBER",
+                          "ADMIN",
+                          "SUPER_USER"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/collection/{collection_id}": {
+      "put": {
+        "tags": [
+          "Collection"
+        ],
+        "description": "Update a new collection.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "collection_id",
+            "description": "Id of the collection to be updated.",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Collection object that needs to be updated.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateCollection"
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Collection"
+        ],
+        "description": "Delete a collection.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "collection_id",
+            "description": "Id of the collection to be updated.",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/collection/file": {
+      "post": {
+        "tags": [
+          "File"
+        ],
+        "description": "API to upload file.",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "file",
+            "in": "formData",
+            "description": "File to upload",
+            "required": false,
+            "type": "file"
+          },
+          {
+            "name": "url",
+            "in": "formData",
+            "description": "URL of the file",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/NormalResponse"
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "File"
+        ],
+        "description": "API to delete files.",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "File ids that needs to be deleted.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/FileDeleteObject"
+            }
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/NormalResponse"
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/collection/file/move-file": {
+      "patch": {
+        "tags": [
+          "File"
+        ],
+        "description": "API to move files between collection.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to move files between collection.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/FileMoveObject"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/NormalResponse"
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/doc-chat/chat": {
+      "post": {
+        "tags": [
+          "DocChat"
+        ],
+        "description": "API query doc chat.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "text/event-stream",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to send for doc chat.",
+            "required": true,
+            "schema": {
+              "properties": {
+                "user_query": {
+                  "type": "string"
+                },
+                "thread_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/doc-chat/faq/update": {
+      "post": {
+        "tags": [
+          "DocChat"
+        ],
+        "description": "API to update docchat faq.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to update doc chat faq.",
+            "required": true,
+            "schema": {
+              "properties": {
+                "collection_id": {
+                  "type": "number"
+                },
+                "faq_id": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/doc-guide/chat": {
+      "post": {
+        "tags": [
+          "DocGuide"
+        ],
+        "description": "API query doc guide chat.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "text/event-stream",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to send for doc guide chat.",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DocGuideRequestObject"
+            }
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/doc-guide/sections/chat": {
+      "post": {
+        "tags": [
+          "DocGuide"
+        ],
+        "description": "API to query doc guide sections.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "text/event-stream",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to send for doc guide chat.",
+            "required": true,
+            "schema": {
+              "properties": {
+                "user_query": {
+                  "type": "string"
+                },
+                "file_id": {
+                  "type": "number"
+                },
+                "section_id": {
+                  "type": "number"
+                },
+                "thread_id": {
+                  "type": "string"
+                },
+                "stage_id": {
+                  "type": "string",
+                  "enum": [
+                    "INITIAL_CHAT",
+                    "CONVERSATION",
+                    "TIMED_OUT",
+                    "COMPLETED"
+                  ]
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/doc-guide/files": {
+      "get": {
+        "tags": [
+          "DocGuide"
+        ],
+        "description": "API to list files in doc guide.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/DocGuideFileResponse"
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/doc-guide/collection-files": {
+      "get": {
+        "tags": [
+          "DocGuide"
+        ],
+        "description": "API to list common files for doc guide process.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/CollectionDocGuideResponse"
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/doc-guide/sections": {
+      "get": {
+        "tags": [
+          "DocGuide"
+        ],
+        "description": "API to list sections in doc guide.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "file_id",
+            "description": "Id of the file which the sections contain.",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/DocGuideSectionResponse"
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/ask-doc/chat": {
+      "post": {
+        "tags": [
+          "AskDoc"
+        ],
+        "description": "API query ask doc chat.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "text/event-stream",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to send for doc chat.",
+            "required": true,
+            "schema": {
+              "properties": {
+                "collection_id": {
+                  "type": "string"
+                },
+                "user_query": {
+                  "type": "string"
+                },
+                "thread_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/custom-instruction": {
+      "get": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to get custom instruction.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "collection_id",
+            "description": "Collection id of the collection to get the custom instruction.",
+            "required": true,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to update custom instruction.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to update custom instruction.",
+            "required": true,
+            "schema": {
+              "properties": {
+                "collection_id": {
+                  "type": "number"
+                },
+                "custom_instruction": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/metadata/status": {
+      "get": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to get status of metadata.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "collection_id",
+            "description": "Collection id of the collection to get the metadata status.",
+            "required": true,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "total_files_count": {
+                      "type": "number"
+                    },
+                    "total_processed_files_count": {
+                      "type": "number"
+                    },
+                    "percentage_value": {
+                      "type": "number"
+                    },
+                    "percentage_display_value": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/metadata": {
+      "get": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to get content of metadata.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "collection_id",
+            "description": "Collection id of the collection to get the metadata content.",
+            "required": true,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "file_id": {
+                        "type": "number"
+                      },
+                      "file_name": {
+                        "type": "string"
+                      },
+                      "processed_percentage": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/metadata/upload": {
+      "post": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to upload csv file to update metadata. (File must be .csv)",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "file",
+            "in": "formData",
+            "description": "File to upload",
+            "required": true,
+            "type": "file"
+          },
+          {
+            "name": "collection_id",
+            "in": "formData",
+            "description": "Id of the collection in which the file to upload",
+            "required": true,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/NormalResponse"
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/summarise": {
+      "get": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to get content of summarise.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "collection_id",
+            "description": "Collection id of the collection to get the summarise content.",
+            "required": true,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "file_name": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "summary_short": {
+                      "type": "string"
+                    },
+                    "summary_long": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/summarise/status": {
+      "get": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to get status of summarise.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "collection_id",
+            "description": "Collection id of the collection to get the summarise status.",
+            "required": true,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "total_files_count": {
+                      "type": "number"
+                    },
+                    "total_processed_files_count": {
+                      "type": "number"
+                    },
+                    "percentage_value": {
+                      "type": "number"
+                    },
+                    "percentage_display_value": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/doc-guide/process-file": {
+      "post": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to process doc guide files.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to process doc guide files",
+            "required": true,
+            "schema": {
+              "properties": {
+                "file_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to delete doc guide files.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to process doc guide files",
+            "required": true,
+            "schema": {
+              "properties": {
+                "file_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/metadata/update": {
+      "post": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to update metadata.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to update metadata",
+            "required": true,
+            "schema": {
+              "properties": {
+                "collection_id": {
+                  "type": "number"
+                },
+                "file_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/summarise/update": {
+      "post": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to update metadata.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to update metadata",
+            "required": true,
+            "schema": {
+              "properties": {
+                "collection_id": {
+                  "type": "number"
+                },
+                "is_process_remaining": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "properties": {
+                      "title": {
+                        "type": "string"
+                      },
+                      "summary_short": {
+                        "type": "string"
+                      },
+                      "summary_long": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/metadata/download": {
+      "get": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to get data for download metadata.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "collection_id",
+            "description": "Collection id of the collection to get metadata",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "file_id": {
+                        "type": "number"
+                      },
+                      "file_name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/summarise/download": {
+      "get": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to get data for download metadata.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "collection_id",
+            "description": "Collection id of the collection to get metadata",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "file_name": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "summary_short": {
+                        "type": "string"
+                      },
+                      "summary_long": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/faq": {
+      "get": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to get data for docchat faq.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "collection_id",
+            "description": "Collection id of the collection to get faq",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "faq_id": {
+                        "type": "string"
+                      },
+                      "faq_question": {
+                        "type": "string"
+                      },
+                      "faq_answer": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to create doc chat faq.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to create doc chat faq",
+            "required": true,
+            "schema": {
+              "properties": {
+                "collection_id": {
+                  "type": "number"
+                },
+                "questions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to update doc chat faq.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to update doc chat faq",
+            "required": true,
+            "schema": {
+              "properties": {
+                "faq_id": {
+                  "type": "number"
+                },
+                "question": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to delete doc chat faq.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to delete doc chat faq",
+            "required": true,
+            "schema": {
+              "properties": {
+                "faq_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/faq/download": {
+      "get": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to get data for docchat faq to download.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "collection_id",
+            "description": "Collection id of the collection to get faq",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "faq_id": {
+                        "type": "string"
+                      },
+                      "faq_question": {
+                        "type": "string"
+                      },
+                      "faq_answer": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/metadata-schema": {
+      "get": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to get data for docchat metadata schema.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "collection_id",
+            "description": "Collection id of the collection to get metadata schema",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "schema_id": {
+                        "type": "number"
+                      },
+                      "field": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to create doc chat metadata schema.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to create metadata schema",
+            "required": true,
+            "schema": {
+              "properties": {
+                "collection_id": {
+                  "type": "string"
+                },
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "properties": {
+                      "field": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "order_number": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to update doc chat metadata schema.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to update a single metadata schema object",
+            "required": true,
+            "schema": {
+              "properties": {
+                "schema_id": {
+                  "type": "number"
+                },
+                "field": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "collection_id": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to delete doc chat metadata schema.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to delete metadata schema",
+            "required": true,
+            "schema": {
+              "properties": {
+                "schema_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "collection_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/metadata-schema/weight": {
+      "patch": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to update doc chat metadata schema weight.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to update a single metadata schema object",
+            "required": true,
+            "schema": {
+              "properties": {
+                "schema_id": {
+                  "type": "number"
+                },
+                "weight_to": {
+                  "type": "number"
+                },
+                "collection_id": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/file-processor/collection-rule": {
+      "get": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to get data for collection rule.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "collection_id",
+            "description": "Collection id of the collection to get collection rule",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "FileProcessor"
+        ],
+        "description": "API to update collection rule.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to update a collection rule",
+            "required": true,
+            "schema": {
+              "properties": {
+                "collection_id": {
+                  "type": "number"
+                },
+                "collection_rules": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/threads": {
+      "get": {
+        "tags": [
+          "Threads"
+        ],
+        "description": "API to get all threads by module and type.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "module",
+            "description": "Name of the module",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "description": "Name of the type in module",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "thread_id": {
+                        "type": "string"
+                      },
+                      "section_id": {
+                        "type": "number"
+                      },
+                      "module": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "thread_created_datetime": {
+                        "type": "string"
+                      },
+                      "messages": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "chat_id": {
+                              "type": "string"
+                            },
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "user",
+                                "assistant"
+                              ]
+                            },
+                            "content": {
+                              "type": "string"
+                            },
+                            "chat_created_datetime": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/threads/{thread_id}": {
+      "get": {
+        "tags": [
+          "Threads"
+        ],
+        "description": "API to get one thread data by thread id.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "thread_id",
+            "description": "Id of the thread",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "thread_id": {
+                      "type": "string"
+                    },
+                    "section_id": {
+                      "type": "number"
+                    },
+                    "module": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "thread_created_datetime": {
+                      "type": "string"
+                    },
+                    "messages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "chat_id": {
+                            "type": "string"
+                          },
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "user",
+                              "assistant",
+                              "action"
+                            ]
+                          },
+                          "content": {
+                            "type": "string"
+                          },
+                          "chat_created_datetime": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/doc-analysis/upload": {
+      "post": {
+        "tags": [
+          "DocAnalysis"
+        ],
+        "description": "API to upload file for doc analysis.",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "produces": [
+          "text/event-stream",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "file",
+            "in": "formData",
+            "description": "File to upload",
+            "required": false,
+            "type": "file"
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/doc-analysis/chat": {
+      "post": {
+        "tags": [
+          "DocAnalysis"
+        ],
+        "description": "API query doc analysis.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "text/event-stream",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to send for doc analysis.",
+            "required": true,
+            "schema": {
+              "properties": {
+                "user_query": {
+                  "type": "string"
+                },
+                "file_id": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "$ref": "#/definitions/NormalFailureResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    },
+    "/doc-analysis/parse-file": {
+      "post": {
+        "tags": [
+          "DocAnalysis"
+        ],
+        "description": "API to parse files for doc analysis.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Request body to send for parse file in doc analysis.",
+            "required": true,
+            "schema": {
+              "properties": {
+                "collection_id": {
+                  "type": "number"
+                },
+                "file_id": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "500": {
+            "description": "failure operation",
+            "schema": {
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "headers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "rows": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "organization-id": []
+          }
+        ]
+      }
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "Authorization",
+      "description": "Type in the *'Value'* input box below: **'Bearer &lt;JWT&gt;'**, where JWT is the token"
+    },
+    "organization-id": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "organization-id",
+      "description": "Id of the organization"
+    }
+  },
+  "definitions": {
+    "File": {
+      "type": "object",
+      "properties": {
+        "file_id": {
+          "type": "number"
+        },
+        "file_name": {
+          "type": "string"
+        },
+        "file_url": {
+          "type": "string"
+        },
+        "file_upload_datetime": {
+          "type": "string"
+        }
+      }
+    },
+    "DocFile": {
+      "type": "object",
+      "properties": {
+        "file_id": {
+          "type": "number"
+        },
+        "file_name": {
+          "type": "string"
+        },
+        "file_url": {
+          "type": "string"
+        },
+        "is_processed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Collection": {
+      "type": "object",
+      "properties": {
+        "collection_id": {
+          "type": "number"
+        },
+        "collection_name": {
+          "type": "string"
+        },
+        "collection_description": {
+          "type": "string"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/File"
+          }
+        }
+      }
+    },
+    "CollectionDocGuide": {
+      "type": "object",
+      "properties": {
+        "collection_id": {
+          "type": "number"
+        },
+        "collection_name": {
+          "type": "string"
+        },
+        "collection_description": {
+          "type": "string"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DocFile"
+          }
+        }
+      }
+    },
+    "CreateCollection": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "CollectionResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Collection"
+          }
+        }
+      }
+    },
+    "CollectionDocGuideResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CollectionDocGuide"
+          }
+        }
+      }
+    },
+    "FileMoveObject": {
+      "type": "object",
+      "properties": {
+        "collection_id": {
+          "type": "integer",
+          "description": "Id of the collection to which the files to be moved."
+        },
+        "file_ids": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "File ids to move to different collection."
+        }
+      }
+    },
+    "FileDeleteObject": {
+      "type": "object",
+      "properties": {
+        "file_ids": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "NormalResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "NormalFailureResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "DocChatRequestObject": {
+      "type": "object",
+      "properties": {
+        "user_text": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "default": "docchat"
+        },
+        "search_type": {
+          "type": "string",
+          "enum": [
+            "default",
+            "metasearch"
+          ]
+        },
+        "new_chat": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no"
+          ]
+        },
+        "collection_id": {
+          "type": "integer"
+        }
+      }
+    },
+    "DocGuideRequestObject": {
+      "type": "object",
+      "properties": {
+        "user_query": {
+          "type": "string"
+        },
+        "file_id": {
+          "type": "integer"
+        },
+        "thread_id": {
+          "type": "string"
+        }
+      }
+    },
+    "DocGuideSectionEventMessageObject": {
+      "type": "object",
+      "properties": {
+        "section_id": {
+          "type": "number"
+        },
+        "file_id": {
+          "type": "number"
+        },
+        "thread_id": {
+          "type": "string"
+        },
+        "event_type": {
+          "type": "string",
+          "enum": [
+            "INTERACTIVE_MESSAGE"
+          ]
+        }
+      }
+    },
+    "DocGuideSectionEventMessageResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string"
+            },
+            "thread_id": {
+              "type": "string"
+            }
+          }
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "DocGuideFileResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DocGuideFile"
+          }
+        }
+      }
+    },
+    "DocGuideFile": {
+      "type": "object",
+      "properties": {
+        "file_id": {
+          "type": "number"
+        },
+        "file_name": {
+          "type": "string"
+        },
+        "file_url": {
+          "type": "string"
+        }
+      }
+    },
+    "DocGuideSectionResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DocGuideSection"
+          }
+        }
+      }
+    },
+    "DocGuideSection": {
+      "type": "object",
+      "properties": {
+        "file_id": {
+          "type": "integer"
+        },
+        "section_id": {
+          "type": "number"
+        },
+        "section_title": {
+          "type": "string"
+        },
+        "section_status": {
+          "type": "string"
+        },
+        "section_assessment_score": {
+          "type": "integer"
+        },
+        "is_enabled": {
+          "type": "boolean"
+        },
+        "latest_thread_id": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,98 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+celery = { extras = ["redis"], version = "*" }
+openai = "*"
+python-docx = "*"
+llama-index = "==0.9.10"
+pymongo = "*"
+pinecone-client = "~=4.0.0"
+pymysql = "*"
+cryptography = "*"
+pyjwt = "*"
+sqlalchemy = "*"
+markdown = "*"
+bcrypt = "*"
+google-auth-oauthlib = "*"
+google-api-python-client = "*"
+flask_swagger_ui = "*"
+langsmith = "*"
+langchain-openai = "*"
+portkey-ai = "*"
+tiktoken = "==0.7.0"
+fuzzywuzzy = "==0.18.0"
+openpyxl = "==3.1.5"
+xlrd = "==2.0.1"
+gunicorn = { extras = ["gevent"], version = "*" }
+flask-cors = "*"
+matplotlib = "*"
+alembic = "*"
+rank-bm25 = "*"
+pymupdf = "*"
+nltk = "*"
+pypdf = "*"
+tabulate = "*"
+mysqlclient = "*"
+flask-sqlalchemy = "*"
+dask = { extras = ["dataframe"], version = "*" }
+psycopg = { extras = ["binary", "pool"], version = "*" }
+python-magic = "*"
+fsspec = "*"
+s3fs = "*"
+dynaconf = "*"
+flask-pymongo = "*"
+pdfkit = "*"
+fake-useragent = "*"
+
+[dev-packages]
+autopep8 = "*"
+honcho = "*"
+pytest = "*"
+coverage = "*"
+
+[db-migrator]
+alembic = "*"
+sqlalchemy = "*"
+mysqlclient = "*"
+
+[tasks-worker]
+celery = { extras = ["redis"], version = "*" }
+pymongo = "*"
+
+[tasks-scheduler]
+celery = { extras = ["redis"], version = "*" }
+celery-redbeat = "*"
+
+[internal-api]
+flask = "*"
+gunicorn = "*"
+celery = { extras = ["redis"], version = "*" }
+mysqlclient = "*"
+sqlalchemy = "*"
+flask-sqlalchemy = "*"
+
+[instance-manager]
+flask = "*"
+gunicorn = "*"
+flask-httpauth = "*"
+passlib = "*"
+flask-admin = { extras = ["sqlalchemy-with-utils", "images"], version = "==2.0.0a3" }
+mysqlclient = "*"
+sqlalchemy = "*"
+flask-sqlalchemy = "*"
+
+[qa-tool]
+flask = "*"
+gunicorn = "*"
+flask-httpauth = "*"
+passlib = "*"
+pymysql = "*"
+sqlalchemy = "*"
+flask-sqlalchemy = "*"
+mysqlclient = "*"
+pymongo = "*"
+flask-pymongo = "*"

@@ -1,0 +1,231 @@
+body, html {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto;
+}
+
+.full-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  /* background: transparent linear-gradient(180deg, #FFFFFF 0%, #0000FF 100%); */
+  background: (to right, #00c6ff, #0072ff);
+  box-sizing: border-box;
+  padding-top: 60px; /* Adjusted for top menu height */
+  overflow: hidden;
+}
+
+.full-page-docguide {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  /* background: transparent linear-gradient(180deg, #5555EE 0%, #4444FF 100%); */
+  background: linear-gradient(to right, #00c6ff, #0072ff);
+  box-sizing: border-box;
+  padding-top: 60px; /* Adjusted for top menu height */
+  overflow: hidden;
+}
+
+/* Adjusting logo and top-menu for the new layout */
+.logo {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 30px;
+  color: #FFFFFF;
+}
+
+.top-menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: transparent;
+}
+
+.top-menu ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.top-menu li {
+  float: left;
+}
+
+.top-menu li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+.top-menu li a:hover {
+  background-color: #470018;
+}
+
+/* Left Panel Styling */
+#left-panel-docguide {
+  margin-top: 20px;
+  overflow-x: hidden;
+  max-width: 220px;
+}
+
+#filelist-docguide {
+  height: 80vh;
+  font-size: small;
+  overflow: visible;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  color: #FFFFFF;
+  /* background: transparent linear-gradient(180deg, #0000FF 0%, #3D22FF 100%) 0% 0% no-repeat padding-box; */
+  background: linear-gradient(to right, #006699, #0088ee);
+  opacity: 0.81;
+  border: 0px;
+  z-index: 9999;
+}
+
+/* Right Panel Styling */
+#right-panel-docguide {
+  overflow-x: hidden;
+}
+
+.central-text{
+  position:relative;
+  left: 0px;
+  text-align: center;
+  font: 30px Roboto;
+  letter-spacing: 0px;
+  color: #FFFFFF;
+  opacity: 1;
+}
+
+.sub-text {
+  position: relative;
+  left: 0px;
+  height: 39px;
+  text-align: center;
+  font: 20px Roboto;
+  letter-spacing: 0px;
+  color: #FFFFFF;
+  opacity: 1;  
+}
+
+/* Card styling */
+.upload-files {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: auto;
+  font: 20px Roboto;
+  color: #FFFFFF;  
+}
+
+#canvas-container {
+  width: calc(100% - 590px); /* Adjusted width to accommodate chat-popup */
+  height: 80vh; /* Set the height to be the full viewport height */
+  overflow-x:auto; /* Horizontal scrollbar if content overflows */
+  overflow-y: auto; /* Vertical scrollbar if content overflows */
+  position: fixed; /* Fixed position to stay in place on scrolling */
+  left: 220px; /* Align to the left side */
+  top: 80px; /* Align to the top */
+}
+
+
+.btn-primary {
+  width: 160px;
+  height: 48px;
+  background: #FFFFFF;
+  border-radius: 10px;
+}
+
+.pagination button, .btn-secondary {
+  width: 70px;
+  height: 20px;
+  background: #FFFFFF;
+  color: #000000;
+  border-radius: 10px;
+  font-size: xx-small;
+}
+.btn-send {
+  width:40px;
+}
+
+.upload-btn-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 30px;
+}
+
+.upload-label {
+  font-size: small;
+  margin-top: 5px;
+}
+
+.bot-message { 
+  text-align: left;
+  position: relative;
+  background-color: #ffffff; /* Your desired background color */
+  color: #5c0731;
+  border-radius: 10px; /* Optional: for rounded corners */
+  padding: 10px; /* Adjust padding as needed */  
+  background: #FFFFFF 0% 0% no-repeat padding-box;
+  box-shadow: 0px 3px 6px #00000029;
+  opacity: 1;
+  font-size:20px;
+}
+
+.user-message {
+  text-align: right;
+  position: relative;
+  background-color: #ffffff;
+  color: #000000;
+  border-radius: 10px;        
+  padding: 10px; /* Adjust padding as needed */  
+  background: #FFFFFF 0% 0% no-repeat padding-box;
+  box-shadow: 0px 3px 6px #00000029;
+  opacity: 1;   
+  font-size:20px;
+}
+
+.bot-message::after {
+  content: "";
+  position: absolute;
+  bottom: -10px; /* Adjust to move the callout up or down */
+  left: -5px; /* Position at the left bottom side */
+  border-width: 20px 20px 0 0; /* Creates a 45-degree angle */
+  border-style: solid;
+  border-color: #ffffff transparent transparent transparent;
+  /* The first color is the color of the callout */
+  transform: rotate(30deg);
+}
+
+.user-message::after {
+  content: "";
+  position: absolute;
+  bottom: -10px; /* Adjust to move the callout up or down */
+  right: -5px; /* Position at the left bottom side */
+  border-width: 20px 0 0 20px; /* Creates a 45-degree angle */
+  border-style: solid;
+  border-color: #ffffff transparent transparent transparent;
+  /* The first color is the color of the callout */
+  transform: rotate(-30deg);
+}
+
+.user-query {
+  width: 100%;
+  left:3px;
+  background: #F5F5F5 0% 0% no-repeat padding-box;
+  opacity: 1;  
+}
+
+
+.leading-qn {
+  background: #880546;
+  font-size: small; 
+}

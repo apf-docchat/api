@@ -1,0 +1,280 @@
+import json
+import logging
+import os
+import re
+
+from flask import Blueprint, session, request, jsonify, Response, render_template, send_file
+from flask_login import login_required
+from openai import OpenAI
+
+from source.legacy.utilities.helper_functions import get_latestchatthreadid, get_old_chat_logs_new, load_prompts_from_db, \
+    generic_query
+from source.legacy.utilities.openai_calls import callai, callai_streaming
+from source.common import config
+
+docguide = Blueprint('docguide', __name__, template_folder='templates')
+
+logger = logging.getLogger('app')
+
+def docguide_generate(response_data):
+   yield f"event: finalOutput\ndata: {response_data}\n\n"
+
+@docguide.route("/docguidenewchat", methods=['GET', 'POST'])
+@login_required
+def docguide_new_chat():
+
+    return render_template(
+        'docguide.html',
+        active_page='/docguidenewchat',
+        modules=session.get('modules', []),
+        new_chat='yes',
+        imgpathprefix='https://demo.nlightnconsulting.com/static/images/card-header-img'
+    )
+
+""" @docguide.route("/docguide", methods=['GET'])
+@login_required
+def docguidestart():
+
+    session['newchat'] = '0'
+    latest_chat_thread_id = request.args.get("f", None)
+    #check if the latestchatthreadid on the querystring f= is valid, else will lead to junk value entering the DB
+    if (check_latest_chat_thread_id(latest_chat_thread_id) is not True):
+        latest_chat_thread_id = None
+
+    old_chats = get_old_chats_index()
+    old_chat_logs, old_chat_ids, module, collection, metadata_array_str = get_old_chat_logs_new(latest_chat_thread_id)
+    print(f"metadata str is {metadata_array_str}")
+
+    load_popup_script = []
+    metatadata_present =[]
+
+    i = 0
+    for item in metadata_array_str:
+        item_json = []
+        print(f"item in metadata is {item}. item_json len is {len(item_json)}")
+        if (item != "" and item != "[]"):
+            item_json = json.loads(item)  # Parse the JSON string
+        if len(item_json) > 0:            
+            metatadata_present.append(1)
+            load_popup_script.append('loadSeeReferencePopup(' + item + ', \''+old_chat_ids[i]+'\');\n')
+        else:
+            metatadata_present.append(0)
+
+        i = i + 1
+
+    return render_template(
+        'docguide.html', 
+        active_page='/docguide', 
+        old_chats=old_chats, 
+        #current_file=current_file,
+        latest_chat_thread_id=latest_chat_thread_id,
+        old_chat_logs=old_chat_logs, 
+        old_chat_ids=old_chat_ids,
+        type=module,
+        collection=collection,
+        modules=session.get('modules', []),
+        #load_popup_ids = load_popup_ids,
+        load_popup_script = load_popup_script,
+        metatadata_present = metatadata_present,
+        imgpathprefix='https://demo.nlightnconsulting.com/static/images/card-header-img'
+    ) """
+
+#@docguide.route('/', methods=['POST'])
+@docguide.route('/docguiderespond', methods=['GET'])
+@login_required
+def docguide_get_ai_response():
+    orgname = session.get('orgname', '')
+    username = session.get('username', '')
+    query = request.args.get("user_text")
+    module = request.args.get("type")
+    search_type = request.args.get("search_type")
+    new_chat = request.args.get("new_chat")
+    filename = request.args.get("filename")
+    #previousMessages = request.args.get("chatlog")
+
+    latest_chat_thread_id = None
+    old_chat_logs = []
+    if (new_chat == 'no'):
+      latest_chat_thread_id = get_latestchatthreadid()
+      old_chat_logs, old_chat_ids, module_temp, collection_temp, metadata_array_str = get_old_chat_logs_new(latest_chat_thread_id)
+
+    previousMessages = json.dumps(old_chat_logs)
+
+    prompts = load_prompts_from_db('docchat')
+    new_chat_value = 0
+
+    #query_type = categorise_query(query, username) #old code used to categorise and do different things. for later reference in case this needs to be brought back
+
+    try:
+      #retrieve relevant vectors from pinecone and then send to llm
+      print("stage 2")
+      os.environ["OPENAI_API_KEY"] = config.OPENAI_API_KEY
+      client = OpenAI(
+        api_key=config.OPENAI_API_KEY,
+      )
+      previous_messages = []
+      metadata_json = []
+      MODEL = config.EMBEDDING_MODEL
+      from pinecone import Pinecone
+      # initialize connection to pinecone (get API key at app.pinecone.io)
+      # pinecone.init(
+      #     api_key=config.pinecone_api_key,
+      #     environment=config.pinecone_environment  # find next to API key in console
+      # )
+      pc = Pinecone(api_key=config.PINECONE_API_KEY)
+
+
+
+      # check if index already exists (only create index if not)
+      if config.PINECONE_INDEX_NAME not in pc.list_indexes():
+          pc.create_index(config.PINECONE_INDEX_NAME, dimension=1536) #old - len(embeds[0])
+      # connect to index and get query embeddings
+      pinecone_index = pc.Index(config.PINECONE_INDEX_NAME)
+      # index = pinecone.Index(config.pinecone_index_name)
+      xq = client.embeddings.create(input=query, model=MODEL).data[0].embedding
+
+      topk = 40
+      res = pinecone_index.query(vector=[xq], filter={"orgname": {"$eq":orgname}, "filename": {"$in":[filename]}}, top_k=topk, include_metadata=True)
+
+      if (len(res['matches'])>0):
+        print("stage 3")
+        if res['matches']:
+            context_prompt = ''
+
+            for i in range(len(res['matches'])):
+                potential_prompt = context_prompt + res['matches'][i]['metadata']['_node_content']
+                if len(potential_prompt) < 32000:
+                    #context_prompt = potential_prompt
+
+                    #Log all metadata fields for debugging
+                    metadata = {}
+                    metadata = res['matches'][i]['metadata']  # Access metadata dictionary
+
+                    # Convert '_node_content' to JSON/object and access the nested value
+                    if '_node_content' in metadata:
+                        node_content = json.loads(metadata['_node_content'])
+                        metadata['text'] = node_content.get('text', '')
+
+                        # Remove the '_node_content' key
+                        del metadata['_node_content']
+
+                    # Define the keys to be removed
+                    keys_to_remove = ['collection', 'orgname', '_node_type', 'doc_id', 'document_id', 'ref_doc_id']
+
+                    # Remove the specified keys from metadata
+                    metadata = {key: value for key, value in metadata.items() if key not in keys_to_remove}
+                    metadata_json.append(metadata)
+
+                    context_prompt += json.dumps(metadata)
+                else:
+                    break
+        else:
+            context_prompt = ''
+
+        print("stage 4")
+        system_content = str(prompts["respond_to_search_user_query"]["value"]) + "\nContext:\n" + context_prompt
+        user_content = query
+        previous_messages = json.loads(previousMessages)
+        #repeat_count = 2
+        """ [response, error] = callai(system_content, previous_messages, user_content, repeat_count, username)
+        answer = clean_response_for_html(response.choices[0].message.content) """
+        print("just before calling SSE Response")
+        collection = ""
+        metadata_json = []
+        return Response(callai_streaming(system_content, previous_messages, user_content, new_chat, latest_chat_thread_id, prompts["give_title_new_chat"]["value"], module, collection, metadata_json, username, orgname), content_type='text/event-stream')
+
+      else:
+        print("stage 5")
+        answer = "Insufficient data to respond to this question."
+
+      response_data = {
+          "id": 9999,
+          "response": answer,
+          "new_chat": str(new_chat_value),
+          "f": latest_chat_thread_id,
+          "metadata": json.dumps(metadata_json)  # Assuming metadata_json is a dictionary or list
+      }
+      # Serialize the dictionary to a JSON-formatted string
+      response_data = json.dumps(response_data)
+      #return jsonify(response_data)
+      return Response(docguide_generate(response_data), content_type='text/event-stream')
+
+
+    except Exception as e:
+      print("stage 9")
+      #print(f"An error occurred: {e}")
+      logger.error(f"Error occurred: {e}")
+      answer = "Sorry unable to respond at the moment. Please try again."
+      new_chat_value = 0
+      response_data = {
+        "id": "",
+        "response": answer,
+        "new_chat": str(new_chat_value),
+        "metadata": "[]"  # Assuming metadata_json is a dictionary or list
+      }
+      # Serialize the dictionary to a JSON-formatted string
+      response_data = json.dumps(response_data)
+      #return jsonify(response_data)
+      return Response(docguide_generate(response_data), content_type='text/event-stream')
+
+@docguide.route('/docguidegetfirstresponse', methods=['POST'])
+@login_required
+def docguide_getfirstresponse():
+  username = session.get("username", "")
+  orgname = session.get("orgname", "")
+  data = request.get_json()
+  filename = data["filename"]
+  fileids = generic_query("files", "file_id", {"file_name": filename})
+  summaries = []
+  for fileid in fileids:
+    summaries.append(generic_query("files_metadata", "summary_short", {"file_id": fileid}))
+
+  system_content = "Return a strictly formatted JSON with the following contents:\nintrotext: Introduce the Content in 50 words. In the next para, prompt the User to do one of the following:(i) Ask a question OR (ii) Press one of the leading questions button\nContent:\n" + json.dumps(summaries)
+  previous_messages = []
+  user_content = ""
+  repeat_count = 2
+  [response, error] = callai(system_content, previous_messages, user_content, repeat_count, username)
+  response = response.choices[0].message.content #clean_response_for_html(response.choices[0].message.content)
+  response =  re.sub(r'```json', '', response, count=1)
+  response =  re.sub(r'```', '', response, count=1)
+
+  return jsonify({"response": response}) #.replace('\n','<br>')})
+
+@docguide.route('/docguidegetleadingqns', methods=['POST'])
+@login_required
+def docguide_getleadingqns():
+  username = session.get("username", "")
+  orgname = session.get("orgname", "")
+
+  data = request.get_json()
+  filename = data["filename"]
+  previousMessages = json.loads(data["previousmessages"])
+
+  fileids = generic_query("files", "file_id", {"file_name": filename})
+  print(fileids)
+  summaries = []
+  questions = ""
+  sections = []
+  for fileid in fileids:
+    summaries.append(generic_query("files_metadata", "summary_long", {"file_id": fileid}))
+    questions += json.dumps(generic_query("files_metadata", "questions", {"file_id": fileid}))
+    sections.append(json.dumps(generic_query("files_metadata", "sections", {"file_id": fileid})))
+
+  system_content = "Imagine that you are the User and have already asked some questions to know more about the content of the document. Given below is a Summary of the contents of the documents, the chat log till now, the Questions the document can answer and the Sections of the document.\n After referring to all of that generate what would be the next best questions to ask to know the contents of the document more. Dont generate questions that are generally about the topic. Keep the questions to be about the contents of the document. If the User has not asked many questions till now, then ask opening type questions like 'Tell me a little about this document.', 'Give a summary of the document' etc. Generate the leading questions one Section after another. Follow the sequence of the Sections.\n Return a strictly formatted JSON with the following contents:\nleadingquestion1: most relevant next question the User could ask based on the User and AI messages till now and the Content below. \nquestion1summary: summary of leadingquestion1 as a 10 word question\nleadingquestion2: another  question the User could ask to know more\nquestion2summary: summary of leadingquestion2 as a 10 word question.\nContent:\n" +  json.dumps(summaries) + "\nQuestions the Content can can answer:\n" + questions + "\nSections:\n" + json.dumps(sections)
+  previous_messages = previousMessages
+  user_content = ""
+  repeat_count = 2
+  [response, error] = callai(system_content, previous_messages, user_content, repeat_count, username)
+  response = response.choices[0].message.content #clean_response_for_html(response.choices[0].message.content)
+  response =  re.sub(r'```json', '', response, count=1)
+  response =  re.sub(r'```', '', response, count=1)
+
+  return jsonify({"response": response}) #.replace('\n','<br>')})
+
+@docguide.route('/docguideviewfile', methods=['GET'])
+@login_required
+def docguide_viewfile():
+    orgname = session.get("orgname", "")
+    filename = request.args.get("filename")
+    pdf_path = os.path.join(config.ORGDIR_PATH, orgname, config.ORGDIR_SUB_PATH, filename)
+    return send_file(pdf_path, as_attachment=False)

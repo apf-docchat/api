@@ -1,0 +1,9 @@
+[run]
+source = source
+
+omit =
+    tests/*
+    scripts/*
+    source/instance_manager/*
+    source/qa_tool/*
+    source/legacy*

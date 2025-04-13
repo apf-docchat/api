@@ -1,0 +1,551 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://cdn.tiny.cloud/1/6cj6vmvxjhms0w02nd10r85xz1njjqyvfu209ejbw0w76zgf/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+<style>
+  body {
+      font-family: Arial, sans-serif;
+  }
+  .editor-toolbar {
+      border: 1px solid #ccc;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+  }
+  .editor-toolbar button {
+      border: none;
+      background: none;
+      cursor: pointer;
+      margin-right: 10px;
+  }
+  .editor-toolbar button:hover {
+      color: blue;
+  }
+  .editor-content {
+      border: 1px solid #ccc;
+      padding: 10px;
+      min-height: 300px;
+      margin-top: 10px;
+  }
+  .modal-dialog {
+        max-width: 700px;
+    }
+</style>
+<div class="col-md-12">
+  <h3 class="mb-4 text-center">
+    Procurement - Bid Evaluation report - DOWN FOR MAINTENANCE
+  </h3>         
+    <div class="container mt-3">
+        <!-- Trigger Modal -->
+        <a href="#" data-toggle="modal" data-target="#howItWorksModal">How it Works</a>
+        
+        <!-- Modal -->
+        <div class="modal fade" id="howItWorksModal" tabindex="-1" role="dialog" aria-labelledby="howItWorksModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="howItWorksModalLabel">How it Works</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Add your description here -->
+                        <p class="font-weight-bold">Purpose of this module: </p><p>Create a Bid Evaluation Report based on all the Bids received.</p>
+                        <p class="font-weight-bold">In brief: </p><p>Generate a fresh Bid Evaluation report or Open an old Report as a Template and update it based on new data, which has been uploaded as PDF docs in the DocChat section of File uploads.</p>
+                        <p class="font-weight-bold">Steps:</p>
+                          <ol>
+                          <li>First visit Upload Source Files section > DocChat and upload all Bids received as PDF files into an appropriately named collection.</li>
+                          <li>On choosing Procurement, choose the appropriate collection as Source for Bids received.</li>
+                          <li>For generating the Bid Eval report:
+                          <ol type="a">
+                            <li>You can either upload a template Bid report from your local computer.</li>
+                            <li>Or you can continue editing from where you left off by choosing from Saved files.</li>
+                            <li>Or you can Generate a Fresh Bid Report.</li>
+                            </ol>
+                          </li>
+                          <li>Once the file is loaded in the Editor, select any text and right click and choose "Update text". AI will bring up updated text below the selected text. The updated text matches the selected text, but uses the new data from the collection chosen as Source for new Bid files.</li>
+                          </ol>
+                          <p class="font-weight-bold">Note: </p>
+                          <ol>
+                          <li>When you select text, it is best to go Section by Section so that the AI can correctly infer what the Section is about.</li>
+                          <li>Choose entire Section including the Title. If Section is longer than say 2 pages, then choose logically isolated portions of say 1-2 pages or so in length. Experiment with different selections so that you develop a sense of how to get the updated text to be appropriate, comprehensive and non-overlapping etc depending on your needs.</li>
+                          <li>Treat the AI updated text merely as a Draft. Do recheck the data given. It saves you time in drafting. But you still need to review the data.</li>
+                          <li>Remember: AI systems hallucinate and they sometimes make up believable data. So please recheck the datapoints from the source text to ensure that there is no hallucination.</li>
+                          </ol>
+                        <p>Have fun with the cutting edge and new way of doing work in AI-Human collaboration mode.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>  
+  <!-- Display dropdown if dataanalysis_filename is not set -->
+    <label for="collection">1. Collection of Uploaded Files chosen as source: </label><div id="collection" style="display:inline;" class="font-weight-bold">--NA--</div>  
+    <div id="dc-collection-choice">
+      <label for="collectionDropdown">Please select a collection from Uploaded Source files</label>            
+      <select id="collectionDropdown">
+      </select>
+      <button onclick="loadcollection()"  class="btn btn-primary">Select collection</button>
+    </div>                 
+  <div id="template-edit-section">
+    <label for="templatefilename">2. File chosen as Template to Edit: </label><div id="templatefilename" style="display:inline;" class="font-weight-bold">--NA--</div>    
+    <div id="file-upload-section" class="container mt-3">
+      <p>Edit existing or Upload new template:</p>
+      <fieldset class="border p-2 mb-3">
+        <legend class="w-auto">Edit Saved Template</legend>
+        <div class="d-flex align-items-center">
+            <select id="template-file-dropdown" class="form-control flex-grow-1 mr-2">
+                <option value="">Select a saved template file</option>
+            </select>
+            <button class="btn btn-primary d-inline-block" style="white-space: nowrap;" id="edit-file-btn">Edit File</button>
+        </div>
+      </fieldset>
+    
+      
+      <fieldset class="border p-2">
+        <legend class="w-auto">Upload New Template</legend>
+        <div class="d-flex align-items-center mb-3">
+            <input type="file" class="form-control mr-2" id="file-upload-template-report" accept=".docx">
+            <button class="btn btn-primary d-inline-block" style="white-space: nowrap;" id="upload-button-template-report">Upload Doc</button>
+
+        </div>
+    </fieldset>
+    <button class="btn btn-primary d-inline-block" style="white-space: nowrap;" id="freshreport-button-template-report">Generate fresh report</button>
+
+    </div>
+    <div class="sine-wave-loader spinner" id="upload-spinner-template-report"></div>
+    <div id="status-template-report" style="display: none; color: darkorange;">Status: Process commencing...</div>
+<!--     <div id="popup" title="References" style="display:none;">
+      <div id="tabs">
+          <ul></ul>
+      </div>
+    </div>     -->
+    <div id="output-upload-template-report" class="mt-3"></div>
+  <div class="mb-3">
+  <!-- Create the editor container -->
+  <textarea id="myeditor"></textarea>
+</div>
+
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Function to toggle visibility based on data.result
+  function showZeroFileMsg(show) {
+      if (show) {
+          $("#filelist-template-report").hide();
+          $("#no-files-message-template-report").show();
+      } else {
+          $("#filelist-template-report").show();
+          $("#no-files-message-template-report").hide();
+      }
+  }
+  function loadcollection() {
+          const dropdown = document.getElementById('collectionDropdown');
+          collection = dropdown.value;
+          //alert('Loaded file: ' + dataanalysis_filename);
+          $("#template-edit-section").show();
+          $("#dc-collection-choice").hide();
+          $("#collection").html(collection);
+          // You can further use the dataanalysis_filename in your script as needed
+  }
+
+  $(document).ready(function(){
+
+        //hide everything until collection has been chosen
+        $("#template-edit-section").hide();
+
+        $('#file-upload-template-report').on('change', function() {
+          var fileName = '';
+          
+          // Check if the browser supports the files property on the File input
+          if (this.files && this.files.length > 0) {
+              // Get the name of the first selected file
+              fileName = this.files[0].name;
+          }
+          $("#templatefilename").html(fileName);
+        });        
+
+        tinymce.init({
+          selector: '#myeditor',
+          plugins: ['table', 'link', 'image', 'code', 'contextmenu'],
+          toolbar: 'undo redo | link image | code',
+          height: 700,
+          contextmenu: 'updatesection',
+          setup: function (editor) {
+            editor.ui.registry.addMenuItem('updatesection', {
+              text: 'Update text',
+              onAction: function () {
+                $("#upload-spinner-template-report").show();
+                // Get the selected text
+                var selectedText = editor.selection.getContent({ format: 'text' });
+                collection = $("#collection").html();
+                // Send the selected text to the server using jQuery AJAX
+                $.ajax({
+                  type: 'POST',
+                  contentType: "application/json",
+                  url: '/procurementupdate',
+                  data: JSON.stringify({user_text: selectedText, file_selected: ["all"], type: "templateedit", collection: collection}),
+                  success: function(response) {
+                    $("#upload-spinner-template-report").hide();
+                    response = JSON.parse(response)
+                    // Request finished. Do processing here.
+                    console.log(response);
+                    // Get the current selection range
+                    var range = editor.selection.getRng();
+                    
+                    // Collapse the range to its end point
+                    range.collapse(false);
+                    
+                    // Create a temporary node and insert it at the end of the selection
+                    var tempNode = editor.dom.create('div');
+                    range.insertNode(tempNode);
+
+                    // Create a newline element
+                    var newline1 = editor.dom.create('br');
+                    var newline2 = editor.dom.create('br');
+                    var newline3 = editor.dom.create('br');
+                    var newline4 = editor.dom.create('br');    
+                    var newline5 = editor.dom.create('br');
+                    var newline6 = editor.dom.create('br');                        
+                    var beginMarker = editor.dom.create('div', {}, '###Updated text - Begins###');
+                    var endMarker = editor.dom.create('div', {}, '###Updated text - Ends###');                
+    
+                    // Insert the newline before the new content
+                    editor.dom.insertAfter(newline1, tempNode);
+                    editor.dom.insertAfter(newline2, newline1);
+                    editor.dom.insertAfter(beginMarker, newline2);
+                    editor.dom.insertAfter(newline3, beginMarker);
+
+                    // Create a new node with the response text
+                    var uniqueId = 'updatedtext-' + new Date().getTime();
+                    var newNode = editor.dom.create('div', {id: uniqueId}, response.response);
+                    // Insert the new node after the newline
+                    editor.dom.insertAfter(newNode, newline3);
+
+                    
+                    // Assuming response.metadata contains the JSON list string
+                    var jsonString = response.metadata;
+
+                    try {
+                      // Parse the JSON string to get the list of items
+                      var itemList = JSON.parse(jsonString);
+
+                      // Generate unique ids for the new div elements
+                      var uniquePopupId = 'popup-' + new Date().getTime();
+                      var uniqueTabId = 'tabs-' + new Date().getTime();
+
+                      // Create the outer div with the unique id, title attribute, and style to hide it initially
+                      var newPopupDiv = $('<div id="' + uniquePopupId + '" title="References" style="display:none;"></div>');
+
+                      // Create the inner tabs div with the unique id and an empty ul element inside it
+                      var newTabsDiv = $('<div id="' + uniqueTabId + '"><ul></ul></div>');
+
+                      // Append the tabs div to the popup div
+                      newPopupDiv.append(newTabsDiv);
+
+                      // Append the newly created popup div to a container in the DOM, e.g., the body element
+                      $('body').append(newPopupDiv);
+
+
+                      // Initialize tabs
+                      var tabsDiv = $('#'+uniqueTabId);
+
+                      // Determine the number of tabs to be created (maximum 5)
+                      var numberOfTabs = Math.min(itemList.length, 10);
+
+                      // Initialize tabs
+                      for (var index = 0; index < numberOfTabs; index++) {
+                          var item = itemList[index];
+
+                          // Add tab title
+                          tabsDiv.children('ul').append('<li><a href="#'+uniqueTabId+'-' + index + '">' + (index + 1) + '</a></li>');
+
+                          // Create content for each tab
+                          var tabContent = '<div id="'+uniqueTabId+'-' + index + '">';
+                          $.each(item, function(key, value) {
+                              tabContent += '<p><strong>' + key + ':</strong> ' + (value ? value : 'NA') + '</p>';
+                          });
+                          tabContent += '</div>';
+                          tabsDiv.append(tabContent);                        
+                          /* // Extract the fields from the item
+                          var masterfilename = item.masterfilename ? item.masterfilename : "NA";
+                          var sectionname = item.sectionname ? item.sectionname : "NA";
+                          var startingpagenum = item.startingpagenum ? item.startingpagenum : "NA";
+                          var text = item.text ? item.text : "NA";
+                          
+                          // Do something with the extracted fields, e.g., log them to the console
+                          console.log("masterfilename:", masterfilename, "sectionname:", sectionname, "startingpagenum:", startingpagenum, "text:", text); */
+                      };
+                      // Create tabs
+                      tabsDiv.tabs();
+
+                      // Dynamically create the "See References" link using editor.dom.create
+                      var seeReferencesLink = editor.dom.create('a', { href: '#', id: 'seeReferences-'+uniquePopupId, 'data-id': uniquePopupId}, 'See References');
+                      // Insert the "See References" link after the referenceNode using editor.dom.insertAfter
+                      editor.dom.insertAfter(seeReferencesLink, newNode);
+
+                    } catch (e) {
+                        // Handle the error, e.g., log it to the console
+                        console.error("Error getting reference data from the source documents:", e);
+                    }                    
+                    
+
+                    // Insert the new node after the temporary node
+                    editor.dom.insertAfter(newline4, newNode);
+                    editor.dom.insertAfter(endMarker, newline4);
+                    editor.dom.insertAfter(newline5, endMarker);
+                    editor.dom.insertAfter(newline6, newline5);
+
+                    // Remove the temporary node
+                    editor.dom.remove(tempNode);
+                    
+                    // Select the newly inserted text
+                    editor.selection.select(newNode);
+                  },
+                  error: function(jqXHR, textStatus, errorThrown) {
+                    // Handle error
+                    console.error(textStatus, errorThrown);
+                  }
+                });
+              }
+            }),
+            editor.on('change', function () {
+            const content = editor.getContent();
+            
+            //If new file, give it a name with a unique timestamp
+            if ($("#templatefilename").html() === "--NA--") {
+              const today = new Date();
+              const formattedDate = today.getFullYear() + "-" + (today.getMonth() + 1) + "-" + today.getDate() + "-" + today.getHours() + "-" + today.getMinutes();
+              //console.log(formattedDate);
+              $("#templatefilename").html("bid_evaluation_" + formattedDate);
+            }
+            fileName = $("#templatefilename").html();            
+            $.ajax({
+                type: 'POST',
+                url: '/templatesave',
+                contentType: 'application/json',
+                data: JSON.stringify({ content: content, filename: fileName }),
+                success: function (response) {
+                    console.log('Content saved successfully');
+                },
+                error: function (error) {
+                    console.error('Failed to save content', error);
+                }
+            });
+            }),
+            // Add an event listener for the 'click' event on the editor's content
+            editor.on('click', function(e) {
+                // Check if the clicked element is a link
+                if (e.target.nodeName === 'A') {
+                    // Prevent the default action of the link
+                    e.preventDefault();
+
+                    // Get the id of the clicked link
+                    var linkId = e.target.id;
+
+                    // Perform the desired action based on the link id
+                    if (linkId.startsWith('seeReferences')) {
+                        // Execute your custom code for the "See References" link
+                        console.log('See References link clicked');
+                        // Access the data attribute value of the #seeReferences element
+                        var dataValue = e.target.getAttribute('data-id');
+                        console.log(dataValue);
+                        // Check if dataValue is defined
+                        if (typeof dataValue !== 'undefined') {
+                            // Append the dataValue to the id of the #popup to get the full unique id
+                            var fullUniqueId = dataValue;
+
+                            // Open the popup with the full unique id as a non-modal dialog
+                            $('#' + fullUniqueId).dialog({
+                                modal: false,
+                                width: 700,
+                                height: 500,
+                                closeText: "Close"
+                            });
+                        } else {
+                            console.error('Data attribute "field" is not defined on the #seeReferences element.');
+                        }
+                    }
+                }
+            });
+          }
+        });
+
+        $.ajax({
+          url: "/folderlist2",
+          type: "POST",
+          processData: false,
+          contentType: "application/json",
+          data: JSON.stringify({type: "{{ type }}"}),
+          success: function(data) {
+            //Add options to select list for each item on data.result
+            var select = $("#collectionDropdown");
+            select.empty(); // empty the select 
+
+            // List each file one by one
+            data.result.forEach(function(item){
+            option = $("<option></option>")
+                .attr("value", item.collection)
+                .text(item.collection);
+            select.append(option);
+            });
+          }
+        });
+
+        //List previously saved template files to continue working
+        $.ajax({
+          url: '/templatefilelist',
+          type: 'GET',
+          success: function(data) {
+              var dropdown = $('#template-file-dropdown');
+              data.forEach(function(file){
+                  dropdown.append($('<option></option>').val(file).text(file));
+              });
+          }
+        });        
+
+        //Load selected template file to editor
+        $('#edit-file-btn').click(function() {
+          var selectedFile = $('#template-file-dropdown').val();
+          $("#templatefilename").html(selectedFile);
+          $("#upload-spinner-template-report").show();          
+          if (selectedFile) {
+              $.ajax({
+                  url: '/gettemplatecontent/' + selectedFile,
+                  type: 'GET',
+                  success: function(data) {
+                      tinymce.activeEditor.setContent(data);
+
+                      // Select all anchor elements within the TinyMCE editor
+                      var allLinks = tinymce.activeEditor.dom.select('a');
+
+                      // Filter the links whose id starts with 'seeReferences'
+                      var filteredLinks = allLinks.filter(function(link) {
+                          return link.id.startsWith('seeReferences');
+                      });
+                      // Iterate over the selected links and remove them
+                      filteredLinks.forEach(function(link) {
+                        tinymce.activeEditor.dom.remove(link);
+                          console.log('Link removed.');
+                      });
+
+                      // Update the content in the editor after removing the links
+                      tinymce.activeEditor.setContent(tinymce.activeEditor.getContent());                    
+
+                      $("#upload-spinner-template-report").hide();
+                      $("#file-upload-section").hide();                      
+                  }
+              });
+          } else {
+              alert("Please select a template file to edit.");
+          }
+          });        
+
+        //Upload file
+        $("#upload-button-template-report").click(function(){
+            var file_data = $('#file-upload-template-report').prop('files')[0];
+            // Check if no file has been selected
+            if (!file_data) {
+                alert("Please select a file before uploading.");
+                return;
+            }
+
+            // Check the file type based on the type value
+            var fileType = file_data.name.split('.').pop().toLowerCase();
+            if (fileType !== 'docx') {
+                alert("Please upload a DOCX file.");
+                return;
+            }
+
+            var form_data = new FormData();
+            form_data.append('file', file_data);
+            // Get the selected collection from the dropdown
+            $("#upload-spinner-template-report").show();
+
+            $.ajax({
+                url: "/templateupload",
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: form_data,
+                success: function(data) {
+                  tinymce.activeEditor.setContent(data);                  
+                  $("#upload-spinner-template-report").hide();
+                  $("#file-upload-section").hide();
+                  tinymce.activeEditor.fire('change');
+                }
+            });
+        });
+
+          //Generate fresh report
+          $("#freshreport-button-template-report").click(function(){
+            /* var file_data = $('#file-upload-template-report').prop('files')[0];
+            // Check if no file has been selected
+            if (!file_data) {
+                alert("Please select a file before uploading.");
+                return;
+            }
+
+            // Check the file type based on the type value
+            var fileType = file_data.name.split('.').pop().toLowerCase();
+            if (fileType !== 'docx') {
+                alert("Please upload a DOCX file.");
+                return;
+            }
+
+            var form_data = new FormData();
+            form_data.append('file', file_data); */
+            // Get the selected collection from the dropdown
+            $("#upload-spinner-template-report").show();
+            $("#status-template-report").show();
+            collection = $("#collection").html();
+
+            /* const evtSource = new EventSource('/freshreportgen?collection=' + encodeURIComponent(collection));
+
+            evtSource.onmessage = function(event) {
+                $('#status-template-report').text('Status: ' + event.data);
+                //alert(event.data);
+            };
+
+            evtSource.addEventListener('finalOutput', function(event) {
+              tinymce.activeEditor.setContent(window.marked(JSON.parse(event.data)));                  
+              $("#upload-spinner-template-report").hide();
+              $("#status-template-report").hide();
+              $("#file-upload-section").hide();
+              tinymce.activeEditor.fire('change');                
+              evtSource.close();
+            });
+
+            evtSource.onerror = function(event) {
+                console.error('EventSource failed:', event);
+                evtSource.close();
+            }; */
+
+
+
+            $.ajax({
+                url: "/freshreportgen2",
+                contentType: "application/json",                
+                type: "POST",
+                processData: false,
+                data: JSON.stringify({collection: collection}),
+                success: function(data) {
+                  //alert("back");
+                  data = JSON.parse(data);
+                  tinymce.activeEditor.setContent(window.marked(data.output));                  
+                  $("#upload-spinner-template-report").hide();
+                  $("#status-template-report").hide();
+                  $("#file-upload-section").hide();
+                  tinymce.activeEditor.fire('change');
+                }
+            });
+        });        
+    });
+  </script>
+  {% endblock %}

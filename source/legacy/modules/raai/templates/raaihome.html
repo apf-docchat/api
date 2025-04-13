@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocChat</title>
+  <!-- CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_raai.css') }}">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+</head>
+
+<body>
+  <div class="full-page">
+    <div class="logo">
+      ra.Ai
+    </div>
+    <nav class="top-menu">
+      <ul>
+          <li><a href="raai">Home</a></li>
+          <li><a href="logout">Logout</a></li>
+      </ul>
+    </nav>    
+    <div class="central-text">
+      The Best AI-Powered platform for Private documents
+    </div>
+    <div class="sub-text">
+      raAi will make a difference to those who consume your documents
+    </div>
+    <form action="/ragetstarted">
+      <button type="submit" class="btn-primary" id="btn-get-started">Get Started</button>
+    </form>
+  </div>
+  <script>
+    $(document).ready(function(){
+      var screenWidth = screen.width;
+
+        // Define screen width threshold for mobile devices (e.g., 768px)
+        var mobileScreenWidthThreshold = 768;
+
+        if (screenWidth <= mobileScreenWidthThreshold) {
+          // Logic for mobile devices
+          alert("Not designed to be accessed on Mobile or Low Width devices. Please use a laptop or computer.");
+          document.body.innerHTML = "<h1>Access Denied</h1><p>This page is not designed to be accessed on Mobile or Low Width devices. Please use a laptop or computer.</p>";
+      }      
+    });
+  </script>
+</body>
+</html>

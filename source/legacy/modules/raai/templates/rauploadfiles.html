@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocChat</title>
+  <!-- CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_raai.css') }}">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+</head>
+
+<body>
+  <div class="full-page">
+    <div class="logo">
+      ra.Ai
+    </div>
+    <nav class="top-menu">
+      <ul>
+        <li><a href="raai">Home</a></li>
+        <li><a href="logout">Logout</a></li>
+      </ul>
+    </nav>    
+
+    <div class="card custom-card upload-files">
+      <div class="card-body"> 
+          <h3>Uploaded Files</h3>          
+            <div class="mb-3">
+                <div class="sine-wave-loader spinner" id="filelist-spinner"></div>
+                <div class="select-wrapper mt-3">
+                    <select id="filelist" class="form-control" size="15"></select>
+                </div>
+                <div id="no-files-message" class="alert alert-warning mt-3" style="display: none;">No files uploaded yet</div>
+            </div>           <br>
+          <div class="mb-3">
+              <input type="file" class="form-control" id="file-upload">
+          </div>
+          <div class="upload-btn-container">
+              <button class="btn btn-primary" id="btn-upload">Upload</button>
+              <!-- <label for="btn-upload" class="upload-label">(Uploaded files go to NotInAnyCollection by default)</label> -->
+              <button class="btn btn-primary" id="btn-next">Next</button>
+          </div>
+          <div class="next-btn-container">
+
+          </div>          
+          <div class="card custom-card" id="uploadMessageCard">
+            <div class="card-body">                
+                <div class="sine-wave-loader spinner" id="upload-spinner"></div>
+                <div id="output-upload" class="mt-3"></div>            
+            </div> <!-- Card body -->
+          </div> <!-- Card -->                          
+      </div>
+    </div> <!-- End of Card -->
+  
+
+      <div class="card custom-card" id="uploadMessageCard">
+      <div class="card-body">                
+          <div class="sine-wave-loader spinner" id="upload-spinner"></div>
+          <div id="output-upload" class="mt-3"></div>            
+      </div> <!-- Card body -->
+      </div> <!-- Card -->
+    </div>   
+  <script>
+    function showZeroFileMsg(show) {
+        if (show) {
+            $("#filelist").hide();
+            $("#no-files-message").show();
+        } else {
+            $("#filelist").show();
+            $("#no-files-message").hide();
+        }
+    }    
+
+    function loadFilelist() {
+      $("#filelist").empty();
+      $.ajax({
+            url: "/filelist2",
+            type: "POST",
+            processData: false,
+            contentType: "application/json",
+            data: JSON.stringify({type: "{{ type }}"}),
+            success: function(data) {
+                //Add options to select list for each item on data.result
+                var select = $("#filelist");
+
+                // Check if the list of files in data.result array is empty
+                if (data.result.length === 0) {
+                    showZeroFileMsg(true);
+                } else {
+                    showZeroFileMsg(false);
+                }
+/*                 //If list of files is not empty list them one by one
+                data.result.forEach(function(item){
+                  option = $("<option></option>")
+                      .attr("value", item)
+                      .text(item);
+                  select.append(option);
+                }); */
+                // Create a dictionary to group filenames by collection
+                let filesBycollection = {};
+                console.log(data.result);
+                // Group each file by its collection
+                data.result.forEach(function(item) {
+                    if (!filesBycollection[item.collection]) {
+                        filesBycollection[item.collection] = [];
+                    }
+                    filesBycollection[item.collection].push(item.filename);
+                });
+
+                // Create option groups for each collection and add file options under them
+                for (const [collection, filenames] of Object.entries(filesBycollection)) {
+                    //let optgroup = $('<optgroup></optgroup>').attr('label', collection);
+                    filenames.forEach(function(filename) {
+                        option = $('<option></option>').attr('value', filename).text(filename);
+                        //optgroup.append(option);
+                        select.append(option);
+                    });
+                    
+                    //select.append(optgroup);
+                }
+
+
+                $("#filelist-spinner").hide();
+            }
+        });      
+    }
+    $(document).ready(function(){
+        //Load list of files uploaded to filter the response
+        $("#filelist-spinner").show();
+        loadFilelist();
+    });
+  </script>
+
+<script>
+
+    $(document).ready(function(){
+      $("#uploadMessageCard").hide();
+      
+      //Upload file
+      $("#btn-upload").click(function(){
+          var file_data = $('#file-upload').prop('files')[0];
+
+          // Check if no file has been selected
+          if (!file_data) {
+              alert("Please select a file before uploading.");
+              return;
+          }
+
+          var form_data = new FormData();
+          if (file_data) {
+              // Check the file type based on the type value
+              var fileType = file_data.name.split('.').pop().toLowerCase();
+          if (fileType !== 'pdf' && fileType !== 'docx') {
+            alert("Please upload a PDF or DOCX file for doc chat.");
+            return;
+          }
+          
+          form_data.append('file', file_data);
+          }
+
+          form_data.append('type', 'docchat');
+          // Get the selected collection from the dropdown
+          form_data.append('collection', 'NotInAnyCollection');
+          $("#upload-spinner").show();
+
+          $.ajax({
+              url: "/docupload2",
+              type: "POST",
+              contentType: false,
+              processData: false,
+              data: form_data,
+              success: function(data) {
+                if (data.status == "success") {
+                  $.ajax({
+                    url: '/call_addfiles', // Change this URL to where your Flask app is hosted
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({filename: file_data.name }),
+                    success: function(response) {
+                        console.log('Success:', response);
+                        loadFilelist();                        
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Error:', xhr.responseText);
+                    }
+                  });                  
+                }
+              }
+          });
+        }); //upload button click
+
+      //Go to next page
+      $("#btn-next").click(function(){
+        var fileCount = $("#filelist option").length;
+
+        if (fileCount > 0) {
+            // There is at least one file
+            // Your if logic goes here
+            console.log("At least one file is present.");
+            $.ajax({
+              url: '/radocguidestart',  // URL of the Flask route
+              type: 'POST',
+              success: function(response) {
+                  console.log('Success:', response);
+                  window.location.href = response.redirect;
+              },
+              error: function(error) {
+                  console.log('Error:', error);
+              }
+            });
+
+        } else {
+            // No files are present
+            alert("Upload at least one file to Proceed.");
+        }       
+      }); 
+
+    }); //document.ready
+</script>
+
+</body>
+</html>

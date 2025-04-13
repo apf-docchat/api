@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <div class="col-md-12">
+            <h3 class="mb-4 text-center">
+                Change File Collection
+            </h3>          
+            <div class="card custom-card">
+            <div class="card-body">            
+            <div class="col-md-4">
+                <label for="collectionDropdown">Select Collection</label>
+                <select class="form-select" id="collectionDropdown">
+                    <!-- Options will be populated here -->
+                </select>                  
+            </div>            
+            </div> <!-- Card body -->
+            </div> <!-- Card -->
+            
+
+            <div class="card custom-card">
+            <div class="card-body">                        
+            <div class="sine-wave-loader spinner" id="filelist-spinner-{{type}}"></div>
+            <form id="deleteForm" style="text-align: -webkit-center;">
+              <div class="select-wrapper mt-3">
+                  <label for="filelist-{{type}}">Select files for Updating to New Collection: </label>
+
+                    <select name="filenames" id="filenames" multiple>
+                    </select>
+              </div>
+              <br>
+              <div>
+                <label for="newcollectionDropdown">Select New Collection</label>
+                <select class="form-select" id="newcollectionDropdown">
+                    <!-- Options will be populated here -->
+                </select>                  
+              </div>   
+              <div>
+                <div class="d-flex justify-content-center">
+                  <div class="sine-wave-loader spinner" id="changecollection-spinner"></div>
+                </div><br>
+                <label style="font-size:x-small;" id="changecollection-spinner-label">For large files could take 10-15 mins. If it takes longer, its safe to Press Back button.</label><br>
+              <div class="d-inline-flex justify-content-center">
+                <a  class="btn btn-primary" href="/docupload?type=docchat">Back</a>
+              </div>                    
+              <div class="d-inline-flex justify-content-center">
+                <button class="btn btn-primary" type="button" id="modifyCollectionButton">Update Collection</button>              
+              </div>
+            </form>
+            <div id="no-files-message-{{type}}" class="alert alert-warning mt-3" style="display: none;">No files uploaded yet</div>
+            </div> <!-- Card body -->
+            </div> <!-- Card -->
+
+        </div>
+    </div>
+    
+    <!-- </div> -->
+  {% endblock %}
+
+  {% block scripts %}
+  <script>
+    function loadFilelist() {
+      var form_data = new FormData();
+      var selectedCollection = $("#collectionDropdown").val();
+      form_data.append('collection', selectedCollection);
+      $.ajax({
+      url:  "/justfilelist2",
+      type: "POST",
+      processData: false,  // prevent jQuery from converting the data
+      contentType: false,  // prevent jQuery from setting the content type      
+      data: form_data,
+      success: function(data) {
+          var dropdown = $('#filenames');
+          dropdown.empty(); // Clear existing options
+          data.result.forEach(function(output){
+              dropdown.append($('<option></option>').val(output.filename).text(output.filename));
+          });          
+      },
+      error: function(error) {
+          console.log(error);
+      }
+      });              
+    }
+    $(document).ready(function(){
+      $("#changecollection-spinner").hide();
+      $("#changecollection-spinner-label").hide();
+      $.ajax({
+      url:  "/folderlist2",
+      type: "POST",
+      processData: false,
+      contentType: "application/json",
+      data: JSON.stringify({type: "{{type}}"}),      
+      success: function(data) {
+          var dropdown = $("#collectionDropdown");
+          dropdown.empty();
+          $.each(data.result, function(index, item) {
+              dropdown.append(new Option(item.collection, item.collection));
+          });
+          loadFilelist();
+          var dropdownNew = $("#newcollectionDropdown");
+          dropdownNew.empty();
+          $.each(data.result, function(index, item) {
+              dropdownNew.append(new Option(item.collection, item.collection));
+          });          
+      },
+      error: function(error) {
+          console.log(error);
+      }
+      });        
+    }); //Document.ready ends
+
+    $("#collectionDropdown").change(function(){
+      loadFilelist();
+    });
+
+    $('#modifyCollectionButton').click(function(){
+      var selectedFiles = $('#filenames').val();
+      var selectedCollection = $('#collectionDropdown').val();
+      var selectedNewCollection = $("#newcollectionDropdown").val();
+      //form_data.append('newcollection', selectedCollection);
+      $("#changecollection-spinner").show();
+      $("#changecollection-spinner-label").show();
+      //alert(selectedCollection);
+      $.post('/modifycollections', {filenames: selectedFiles, newcollectionname: selectedNewCollection}, function(response) {
+        $("#changecollection-spinner").hide();
+        $("#changecollection-spinner-label").hide();
+          console.log(response); // Alert or handle the response as needed
+          window.location.reload();
+      });
+    });
+
+  </script>
+  {% endblock %}

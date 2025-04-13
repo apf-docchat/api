@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="col-md-12">
+        <h3 class="mb-4 text-center">
+            User Chat Threads
+        </h3>
+        <div class="container mt-5">
+            <form method="GET" action="{{ url_for('threads') }}" class="mb-4">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="username">Filter by Username:</label>
+                        <select id="username" name="username" class="form-control">
+                            <option value="">Select a username</option>
+                            {% for username in usernames %}
+                                <option value="{{ username.username }}"
+                                        {% if username.username == request.args.get('username', '') %}selected{% endif %}>{{ username.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="week_starting_date">Week Starting Date:</label>
+                        <input type="date" id="week_starting_date" name="week_starting_date" class="form-control"
+                               value="{{ request.args.get('week_starting_date', '') }}">
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12 text-center">
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                    </div>
+                </div>
+            </form>
+            {% for thread in threads %}
+                <div class="thread border p-3 mb-4">
+                    <!-- <div class="text-center">
+                  <h4>Thread ID: {{ thread.thread_id }}</h4>
+                  <p><strong>Created:</strong> {{ thread.thread_created_datetime }}</p>
+                  <p><strong>Title:</strong> {{ thread.title }}</p>
+                  <p><strong>Module:</strong> {{ thread.module }}</p>
+              </div> -->
+                    <h6>Messages: {{ thread.username }}</h6>
+                    <div class="messages">
+                        {% for message in thread.messages %}
+                            {% if message.role == 'user' %}
+                                <div class="alert alert-primary text-right" role="alert">
+                                    <p>{{ message.content | safe }}</p>
+                                    <p style="font-size: x-small">{{ message.chat_created_datetime }}</p>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-secondary text-left" role="alert">
+                                    <p>{{ message.content | safe }}</p>
+                                    <p style="font-size: x-small">{{ message.chat_created_datetime }}</p>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

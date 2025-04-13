@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <div class="col-md-12">
+            <h3 class="mb-4 text-center">
+                Delete DocChat Files
+            </h3>          
+            <div class="card custom-card">
+            <div class="card-body">            
+            <div class="col-md-4">
+                <label for="collectionDropdown">Select collection</label>
+                <select class="form-select" id="collectionDropdown">
+                    <!-- Options will be populated here -->
+                </select>                  
+            </div>            
+            </div> <!-- Card body -->
+            </div> <!-- Card -->
+
+            <div class="card custom-card" id="deleteMessageCard">
+              <div class="card-body">            
+                <div class="sine-wave-loader spinner" id="delete-spinner-{{type}}"></div>
+                <div id="output-delete-{{type}}" class="mt-3"></div>
+              </div>
+            </div> <!-- Card -->            
+
+            <div class="card custom-card">
+            <div class="card-body">                        
+            <div class="sine-wave-loader spinner" id="filelist-spinner-{{type}}"></div>
+            <form id="deleteForm" style="text-align: -webkit-center;">
+              <div class="select-wrapper mt-3">
+                  <label for="filelist-{{type}}">List of files: </label>
+
+                    <select name="filenames" id="filenames" multiple>
+                    </select>
+              </div>
+              <div class="d-inline-flex justify-content-center">
+                <a  class="btn btn-primary" href="/docupload?type=docchat">Back</a>
+              </div>                    
+              <div class="d-inline-flex justify-content-center">
+                <button class="btn btn-primary" type="button" id="deleteButton">Delete Selected</button>              
+              </div>
+            </form>
+            <div id="no-files-message-{{type}}" class="alert alert-warning mt-3" style="display: none;">No files uploaded yet</div>
+            </div> <!-- Card body -->
+            </div> <!-- Card -->
+
+        </div>
+    </div>
+    
+    <!-- </div> -->
+  {% endblock %}
+
+  {% block scripts %}
+  <script>
+    function loadFilelist() {
+      var selectedcollection = $("#collectionDropdown").val();
+      var form_data = new FormData();
+      form_data.append('collection', selectedcollection);
+      $.ajax({
+      url:  "/justfilelist2",
+      type: "POST",
+      processData: false,  // prevent jQuery from converting the data
+      contentType: false,  // prevent jQuery from setting the content type      
+      data: form_data,
+      success: function(data) {
+          var dropdown = $('#filenames');
+          dropdown.empty(); // Clear existing options
+          data.result.forEach(function(output){
+              dropdown.append($('<option></option>').val(output.filename).text(output.filename));
+          });          
+      },
+      error: function(error) {
+          console.log(error);
+      }
+      });              
+    }
+    $(document).ready(function(){
+      $("#deleteMessageCard").hide();      
+      $.ajax({
+      url:  "/folderlist2",
+      type: "POST",
+      processData: false,
+      contentType: "application/json",
+      data: JSON.stringify({type: "{{type}}"}),      
+      success: function(data) {
+          var dropdown = $("#collectionDropdown");
+          dropdown.empty();
+          $.each(data.result, function(index, item) {
+              dropdown.append(new Option(item.collection, item.collection));
+          });
+          loadFilelist();
+      },
+      error: function(error) {
+          console.log(error);
+      }
+      });        
+    }); //Document.ready ends
+
+    $("#collectionDropdown").change(function(){
+      loadFilelist();
+    });
+
+    $('#deleteButton').click(function(){
+      $("#delete-spinner-{{type}}").show();
+      var selectedFiles = $('#filenames').val();
+      var selectedcollection = $('#collectionDropdown').val();
+      //alert(selectedcollection);
+      $.post('/docdelete', {filenames: selectedFiles, collectionname: selectedcollection}, function(data) {
+          console.log(data);
+          $("#delete-spinner-{{type}}").hide();              
+          $("#deleteMessageCard").show();  
+
+          let convertedData = window.marked(data.result);                    
+          let newElemContent;
+          if ('{{type}}' === 'dataanalysis') {
+              newElemContent = "<h3>Doc upload completed</h3>";
+          } else if ('{{type}}' !== 'dataanalysis') {
+              newElemContent = "<h3>Note:</h3>"+"<p>" + convertedData + "</p>";
+          }
+          let newElem = $("<div>" + newElemContent + "</div>");
+
+          newElem.css({
+              "padding" : "20px",
+              "margin-bottom" : "10px",
+              "background-color" : "#f1f1f1",
+              "border" : "1px solid #d9d9d9",
+              "border-radius" : "4px"
+          });
+          newElem.find("h3").css({
+              "font-size" : "1.2em",
+              "color" : "#333"
+          });
+          newElem.find("p").css({
+              "margin-top" : "10px",
+              "line-height" : "1.5",
+              "color" : "#666"
+          });                      
+          $("#output-delete-{{type}}").prepend(newElem);                                
+      });
+    });    
+
+  </script>
+  {% endblock %}
